@@ -1,0 +1,110 @@
+/* base.css — Reset + پایه RTL/فارسی + رفتار لمسی iOS (Phase 16) */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html {
+  direction: rtl;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  /* Phase 16 — رفتار «برنامه» به‌جای «صفحه‌ی وب»:
+     بدون این، کشیدن صفحه به پایین در حالت نصب‌شده کل رابط را با افکت کشسان
+     جابه‌جا می‌کند و زیر آن پس‌زمینه‌ی سفید Safari دیده می‌شود. */
+  overscroll-behavior-y: none;
+}
+
+/* Phase 24 — زمینه‌ی صفحه: دو لکه‌ی نور ثابت پشت همه‌چیز.
+   روی iOS `background-attachment: fixed` کار نمی‌کند، پس یک لایه‌ی position:fixed
+   جدا پشت محتوا می‌نشیند (z-index منفی، بدون رویداد لمسی). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 100% 0%, var(--backdrop-a), transparent 60%),
+    radial-gradient(90% 55% at 0% 100%, var(--backdrop-b), transparent 65%),
+    var(--color-bg);
+}
+
+h1, h2, h3, h4 { margin: 0 0 var(--space-2); font-weight: 700; line-height: 1.4; }
+p { margin: 0 0 var(--space-2); color: var(--color-text); }
+
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* هر فیلد ورودی حداقل ۱۶px — جلوگیری از زوم خودکار Safari روی iOS.
+   توضیح کامل در variables.css کنار --font-size-input. */
+input, select, textarea {
+  font-size: var(--font-size-input);
+}
+
+/* عناصر لمسی:
+   - touch-action: manipulation تأخیر ۳۰۰ms و زوم دو-ضربه‌ای را حذف می‌کند.
+   - -webkit-touch-callout منوی «کپی/اشتراک» را روی نگه‌داشتن انگشت می‌بندد.
+   - user-select روی دکمه‌ها خاموش است تا کشیدن انگشت، متن دکمه را انتخاب نکند؛
+     ولی روی مبالغ و متن‌ها روشن می‌ماند چون کاربر باید بتواند عدد را کپی کند. */
+button, a, [role="button"], .bottom-nav__item, .menu-list__item,
+.entity-card, .product-card, .tabs__tab, .period-switch__btn {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; margin: 0; padding: 0; }
+img, svg { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* اعداد همیشه LTR داخل جمله‌ی RTL نمایش داده شوند تا ترتیب ارقام به‌هم نریزد */
+.num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  /* استثنای قاعده‌ی بالا: مبلغ و وزن باید قابل انتخاب و کپی باشند */
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.text-muted { color: var(--color-text-muted); }
+.text-success { color: var(--color-success); }
+.text-danger { color: var(--color-danger); }
+.text-warning { color: var(--color-warning); }
+
+/* کاربرانی که در تنظیمات iOS «کاهش حرکت» را روشن کرده‌اند: بدون انیمیشن،
+   بدون انتقال و بدون «فشرده شدن» دکمه‌ها (transform هنگام لمس). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  :active { transform: none !important; }
+}

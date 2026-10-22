@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <!-- viewport-fit=cover لازم است تا رابط تمام صفحه‌ی آیفون را بگیرد و
+       env(safe-area-inset-*) مقدار واقعی برگرداند (ناچ بالا، نوار Home پایین).
+       maximum-scale عمداً حذف شده: بستن زوم یک مشکل دسترسی‌پذیری است و
+       مشکل «زوم هنگام فوکوس» با فونت ۱۶px فیلدها حل شده، نه با قفل‌کردن زوم. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>طلا | مدیریت پخش طلای اجرت‌دار</title>
+  <meta name="description" content="نرم‌افزار مدیریت خرید، فروش، حساب‌ها و موجودی طلای اجرت‌دار" />
+  <meta name="theme-color" content="#8B6F1F" />
+  <!-- بدون این، Safari مبالغ و کدهای بلند را به‌عنوان شماره تلفن تشخیص می‌دهد،
+       آبی و زیرخط‌دار می‌کند و لمس آن‌ها پنجره‌ی تماس باز می‌کند. -->
+  <meta name="format-detection" content="telephone=no" />
+  <!-- Phase 24 — تم دستی پیش از اولین رنگ‌آمیزی. تم «خودکار» را خودِ CSS انجام
+       می‌دهد؛ این چند خط فقط برای کسی است که دستی «تیره/روشن» را برخلاف سیستم
+       انتخاب کرده (وگرنه یک فریم با تم سیستم دیده می‌شد). منطق کامل: utils/theme.js -->
+  <script>try{var t=localStorage.getItem('tala.theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="icon" href="./icons/icon-192.png" type="image/png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="طلا" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Splash Screen آیفون (فقط در حالت نصب‌شده دیده می‌شود).
+       iOS برای هر اندازه‌ی صفحه فایل جداگانه می‌خواهد و اگر اندازه‌ی دقیق
+       دستگاه موجود نباشد، صفحه‌ی سفید نشان می‌دهد. -->
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./icons/splash/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+
+  <!-- فونت زودتر از CSS شروع به دانلود کند تا متن یک‌بار با فونت سیستمی و
+       بار دوم با Vazirmatn رندر نشود (پرش چشمی هنگام باز شدن برنامه). -->
+  <link rel="preload" href="./src/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./src/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
+
+  <link rel="stylesheet" href="./src/css/variables.css" />
+  <link rel="stylesheet" href="./src/css/fonts.css" />
+  <link rel="stylesheet" href="./src/css/base.css" />
+  <link rel="stylesheet" href="./src/css/layout.css" />
+  <link rel="stylesheet" href="./src/css/components.css" />
+  <link rel="stylesheet" href="./src/css/print.css" />
+</head>
+<body>
+  <noscript>این برنامه برای اجرا نیاز به JavaScript فعال دارد.</noscript>
+
+  <div id="app">
+    <header id="app-header"></header>
+    <main id="app-outlet" class="app-outlet" aria-live="polite"></main>
+    <nav id="app-bottom-nav"></nav>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="./src/js/main.js"></script>
+</body>
+</html>

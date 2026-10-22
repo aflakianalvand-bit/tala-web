@@ -1,0 +1,295 @@
+/* variables.css — Design Tokens (طلا)
+ *
+ * Phase 24 — سیستم طراحی «شیشه‌ی سبک»
+ * ─────────────────────────────────────
+ * تمام رنگ، سایه، شیشه و حرکت فقط از همین فایل می‌آید؛ هیچ مؤلفه‌ای رنگ خام
+ * نمی‌نویسد (UI_GUIDELINES §6.15). سه لایه‌ی سطح داریم:
+ *
+ *   ۱) زمینه (--color-bg + --backdrop-*)    ⇐ پس‌زمینه‌ی صفحه با دو لکه‌ی نور طلایی
+ *   ۲) شیشه (--glass-*)                     ⇐ فقط هدر، نوار پایین، کارت، مودال
+ *   ۳) مات (--color-surface / --color-field) ⇐ فیلدها، جدول‌ها، جعبه‌ی اعداد
+ *
+ * قاعده‌ی کنتراست: شیشه‌ی کارت آن‌قدر مات است (≥ ۰٫۸۴) که بدترین ترکیب
+ * «متن کم‌رنگ روی کارت روی تیره‌ترین نقطه‌ی زمینه» هم WCAG AA (۴٫۵:۱) را رد نکند.
+ * این را test/designSystem.test.mjs با ترکیب واقعی آلفا محاسبه می‌کند، نه چشم.
+ *
+ * تم: روشن پیش‌فرض است؛ تیره یا از سیستم (prefers-color-scheme) یا از کلید
+ * دستی (<html data-theme="dark">). utils/theme.js فقط data-theme را می‌گذارد؛
+ * هیچ رنگی در JS نیست.
+ */
+:root {
+  color-scheme: light;
+
+  /* ───────── رنگ‌ها — تم روشن ───────── */
+  --color-bg: #F5F0E6;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F1EADC;
+  --color-field: #FFFFFF;          /* فیلد ورودی همیشه مات */
+  --color-border: #DDD3C1;
+  --color-border-strong: #928469;  /* لبه‌ی فیلد: ≥ ۳:۱ روی سطح (WCAG 1.4.11) */
+  --color-text: #1F1A15;
+  --color-text-muted: #5A5046;
+
+  --color-primary: #7A5C10;
+  --color-primary-dark: #5C450B;
+  --color-primary-bg: #F3E9CF;
+  --color-primary-contrast: #FFFFFF;
+
+  --color-success: #166534;
+  --color-success-bg: #E3F4E8;
+  --color-danger: #A3211A;
+  --color-danger-bg: #FBE7E5;
+  --color-warning: #8A4F00;
+  --color-warning-bg: #FFF1D6;
+  --color-overdue: #7A1620;
+  --color-overdue-bg: #F6DEDF;
+
+  /* متن روی رنگ‌های پُر (دکمه‌ی خطر، Toast) */
+  --color-on-success: #FFFFFF;
+  --color-on-danger: #FFFFFF;
+  --color-on-warning: #FFFFFF;
+  --toast-bg: #2A231C;
+  --toast-fg: #FFFFFF;
+  --overlay-bg: rgba(24, 18, 8, 0.42);
+  --focus-ring: #7A5C10;
+  --switch-knob: #FFFFFF;
+
+  /* ───────── زمینه‌ی صفحه ─────────
+     دو لکه‌ی نور ملایم؛ بدون آن‌ها شیشه روی رنگ یکدست فقط «سفید کم‌رنگ» است. */
+  --backdrop-a: rgba(212, 170, 70, 0.30);
+  --backdrop-b: rgba(190, 150, 110, 0.20);
+
+  /* ───────── شیشه ─────────
+     --glass-bg: کروم (هدر/نوار پایین) — شفاف‌تر، روی آن فقط برچسب و آیکن است.
+     --glass-bg-card / --glass-bg-modal: مات‌تر، چون عدد و متن روی آن‌هاست. */
+  --glass-blur: 18px;
+  --glass-saturate: 160%;
+  --glass-bg: rgba(255, 252, 246, 0.72);
+  --glass-bg-card: rgba(255, 253, 249, 0.86);
+  --glass-bg-modal: rgba(255, 253, 249, 0.94);
+  --glass-edge: rgba(255, 255, 255, 0.85);      /* حاشیه‌ی نور (بالا/لبه) */
+  --glass-line: rgba(122, 92, 16, 0.16);        /* خط مرز بیرونی */
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  /* ───────── سایه ───────── */
+  --shadow-sm: 0 1px 2px rgba(40, 28, 10, 0.06), 0 2px 8px rgba(40, 28, 10, 0.05);
+  --shadow-md: 0 8px 24px rgba(40, 28, 10, 0.12), 0 2px 6px rgba(40, 28, 10, 0.06);
+  --shadow-lg: 0 18px 48px rgba(40, 28, 10, 0.18);
+  --shadow-glass: 0 4px 18px rgba(60, 40, 10, 0.08);
+  --shadow-nav: 0 -4px 18px rgba(60, 40, 10, 0.05);
+
+  /* ───────── Safe Area (Phase 16) ─────────
+     iPhone 13 Pro Max: بالا ۴۷pt (ناچ/Dynamic Island در حالت standalone) و
+     پایین ۳۴pt (نوار Home). چون index.html با `viewport-fit=cover` تمام صفحه
+     را می‌گیرد، این مقادیر باید صریحاً به هدر، Bottom Nav و محتوا اضافه شوند
+     وگرنه عنوان زیر ساعت و دکمه‌ها زیر نوار Home می‌روند.
+     مقدار پیش‌فرض 0px برای مرورگر دسکتاپ و محیط تست (jsdom) لازم است. */
+  --device-top: env(safe-area-inset-top, 0px);
+  --device-bottom: env(safe-area-inset-bottom, 0px);
+  --device-left: env(safe-area-inset-left, 0px);
+  --device-right: env(safe-area-inset-right, 0px);
+
+  /* ───────── مرورگر میهمان (Phase 20) ─────────
+     وقتی برنامه از داخل اپلیکیشن دیگری باز می‌شود (Documents، مرورگر داخلی
+     تلگرام/اینستاگرام)، آن اپلیکیشن نوار ابزار خودش را **روی** صفحه‌ی وب
+     می‌اندازد و هیچ API استانداردی این فاصله را گزارش نمی‌کند. مقدار این دو
+     متغیر را utils/viewerInsets.js هنگام بالا آمدن برنامه پر می‌کند؛ در
+     Safariِ معمولی و در حالت نصب‌شده صفر می‌ماند و چیزی تغییر نمی‌کند. */
+  --viewer-top: 0px;
+  --viewer-bottom: 0px;
+
+  /* فضای امن مؤثر = **بیشینه**ی دو مانع، نه جمع آن‌ها.
+     هر دو از همان لبه‌ی صفحه اندازه‌گیری می‌شوند و روی هم می‌افتند؛ با جمع،
+     هدر روی آیفون ناچ‌دار دو برابر لازم بلند می‌شد. تمام مصرف‌کننده‌ها
+     (هدر، Bottom Nav، مودال، Toast، دکمه‌های شناور، برگه‌ی چاپ) از همین
+     نام‌ها می‌خوانند، پس هیچ‌کدام نیاز به تغییر ندارند. */
+  --safe-top: max(var(--device-top), var(--viewer-top));
+  --safe-bottom: max(var(--device-bottom), var(--viewer-bottom));
+  --safe-left: var(--device-left);
+  --safe-right: var(--device-right);
+
+  /* ارتفاع صفحه‌کلید مجازی؛ توسط utils/viewport.js با visualViewport به‌روز می‌شود.
+     بدون این، نوار جمع فاکتور و دکمه‌های مودال زیر صفحه‌کلید iOS پنهان می‌مانند. */
+  --kb-inset: 0px;
+
+  /* ───────── تایپوگرافی ─────────
+     `--ui-scale` تنها اهرم بزرگ‌نمایی کل رابط است. روی صفحه‌های بزرگ (۴۱۴px
+     به بالا: iPhone 13 Pro Max با ۴۲۸pt، Plus و Max های دیگر) کمی بزرگ‌تر
+     می‌شود تا از فضای اضافه برای «خواناتر» استفاده شود، نه برای «شلوغ‌تر».
+     هیچ جای دیگری از کد نباید اندازه‌ی فونت ثابت (px) بنویسد. */
+  --ui-scale: 1;
+
+  --font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, system-ui, -apple-system, sans-serif;
+  /* Phase 24 — خوانایی برای همه‌ی سنین: پایه از ۱۵ به ۱۷px، کوچک‌ترین متن
+     (راهنما و برچسب) از ۱۲ به ۱۳٫۵px. هیچ متنی زیر ۱۳px نیست. */
+  --font-size-xs: calc(0.84375rem * var(--ui-scale));
+  --font-size-sm: calc(0.9375rem * var(--ui-scale));
+  --font-size-base: calc(1.0625rem * var(--ui-scale));
+  --font-size-lg: calc(1.1875rem * var(--ui-scale));
+  --font-size-xl: calc(1.375rem * var(--ui-scale));
+  --font-size-2xl: calc(1.75rem * var(--ui-scale));
+  --line-height-base: 1.75;
+
+  /* اندازه‌ی فونت فیلدهای ورودی — عمداً ثابت ۱۶px و مستقل از --ui-scale.
+     Safari روی iOS هر فیلدی با فونت کوچک‌تر از ۱۶px را هنگام فوکوس با زوم
+     خودکار بزرگ می‌کند و صفحه دیگر به حالت اول برنمی‌گردد. تا Phase 15 مقدار
+     مؤثر ۱۵px بود، یعنی ثبت هر فاکتور با یک پرش ناخواسته‌ی صفحه همراه بود. */
+  --font-size-input: 16px;
+
+  /* فاصله‌گذاری */
+  --space-1: calc(4px * var(--ui-scale));
+  --space-2: calc(8px * var(--ui-scale));
+  --space-3: calc(12px * var(--ui-scale));
+  --space-4: calc(16px * var(--ui-scale));
+  --space-5: calc(24px * var(--ui-scale));
+  --space-6: calc(32px * var(--ui-scale));
+
+  /* شکل */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* چیدمان */
+  --header-height: 56px;
+  --bottom-nav-height: 64px;
+  /* حداقل هدف لمسی — Phase 24: ۴۸px روی همه‌ی عرض‌ها (قبلاً ۴۴px فقط زیر ۴۱۴px).
+     ۴۴pt حداقلِ Apple است؛ برای کاربر مسن و انگشت بزرگ ۴۸ امن‌تر است و
+     test/designSystem.test.mjs هر دکمه/فیلد رندرشده را با آن می‌سنجد. */
+  --touch-target-min: 48px;
+  --max-content-width: 720px;
+
+  /* ───────── حرکت — کوتاه و بی‌پرش ─────────
+     هیچ انیمیشنی بیش از ۲۴۰ms نیست؛ با prefers-reduced-motion همه صفر می‌شوند. */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --transition-fast: var(--motion-fast) var(--ease-out);
+  --transition-base: var(--motion-base) var(--ease-out);
+}
+
+/* ───────── تم تیره ─────────
+   دو انتخاب‌گر با مقدار یکسان: (۱) سیستم تیره است و کاربر «روشن» را دستی
+   انتخاب نکرده، (۲) کاربر «تیره» را دستی انتخاب کرده. بدون (۱)، برنامه تا
+   اجرای JS یک فریم روشن نشان می‌داد (پرش سفید در شب). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #13110E;
+    --color-surface: #1F1B17;
+    --color-surface-alt: #2A251F;
+    --color-field: #17140F;
+    --color-border: #3B342B;
+    --color-border-strong: #7A6E5C;
+    --color-text: #F4EFE7;
+    --color-text-muted: #BDB2A2;
+    --color-primary: #E2B84E;
+    --color-primary-dark: #F2D48A;
+    --color-primary-bg: #3A2F14;
+    --color-primary-contrast: #1C1505;
+    --color-success: #6BD495;
+    --color-success-bg: #12301F;
+    --color-danger: #FF9187;
+    --color-danger-bg: #3D1714;
+    --color-warning: #F3B650;
+    --color-warning-bg: #3A2A0D;
+    --color-overdue: #FFA2AC;
+    --color-overdue-bg: #42161E;
+    --color-on-success: #06200F;
+    --color-on-danger: #2B0906;
+    --color-on-warning: #251702;
+    --toast-bg: #F4EFE7;
+    --toast-fg: #1F1A15;
+    --overlay-bg: rgba(0, 0, 0, 0.6);
+    --focus-ring: #F2D48A;
+    --backdrop-a: rgba(226, 184, 78, 0.16);
+    --backdrop-b: rgba(120, 90, 160, 0.12);
+    --glass-bg: rgba(30, 26, 22, 0.70);
+    --glass-bg-card: rgba(33, 29, 24, 0.86);
+    --glass-bg-modal: rgba(31, 27, 23, 0.95);
+    --glass-edge: rgba(255, 255, 255, 0.10);
+    --glass-line: rgba(255, 255, 255, 0.08);
+    --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
+    --shadow-glass: 0 4px 18px rgba(0, 0, 0, 0.35);
+    --shadow-nav: 0 -4px 18px rgba(0, 0, 0, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #13110E;
+  --color-surface: #1F1B17;
+  --color-surface-alt: #2A251F;
+  --color-field: #17140F;
+  --color-border: #3B342B;
+  --color-border-strong: #7A6E5C;
+  --color-text: #F4EFE7;
+  --color-text-muted: #BDB2A2;
+  --color-primary: #E2B84E;
+  --color-primary-dark: #F2D48A;
+  --color-primary-bg: #3A2F14;
+  --color-primary-contrast: #1C1505;
+  --color-success: #6BD495;
+  --color-success-bg: #12301F;
+  --color-danger: #FF9187;
+  --color-danger-bg: #3D1714;
+  --color-warning: #F3B650;
+  --color-warning-bg: #3A2A0D;
+  --color-overdue: #FFA2AC;
+  --color-overdue-bg: #42161E;
+  --color-on-success: #06200F;
+  --color-on-danger: #2B0906;
+  --color-on-warning: #251702;
+  --toast-bg: #F4EFE7;
+  --toast-fg: #1F1A15;
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --focus-ring: #F2D48A;
+  --backdrop-a: rgba(226, 184, 78, 0.16);
+  --backdrop-b: rgba(120, 90, 160, 0.12);
+  --glass-bg: rgba(30, 26, 22, 0.70);
+  --glass-bg-card: rgba(33, 29, 24, 0.86);
+  --glass-bg-modal: rgba(31, 27, 23, 0.95);
+  --glass-edge: rgba(255, 255, 255, 0.10);
+  --glass-line: rgba(255, 255, 255, 0.08);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
+  --shadow-glass: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --shadow-nav: 0 -4px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* کاربرانی که در iOS «کاهش شفافیت» را روشن کرده‌اند: شیشه کاملاً مات می‌شود. */
+@media (prefers-reduced-transparency: reduce) {
+  /* :root سه‌بار — تا بر انتخاب‌گرهای تم تیره (۰،۲،۰) هم غلبه کند. */
+  :root:root:root {
+    --glass-blur: 0px;
+    --glass-bg: var(--color-surface);
+    --glass-bg-card: var(--color-surface);
+    --glass-bg-modal: var(--color-surface);
+  }
+}
+
+/* کاهش حرکت: توکن‌ها صفر می‌شوند (base.css هم انیمیشن‌ها را خاموش می‌کند). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+/* صفحه‌های بزرگ آیفون (Pro Max / Plus — عرض ۴۲۸pt و ۴۳۰pt):
+   همه چیز ۷٪ بزرگ‌تر و هدف‌های لمسی ۴۸px. عرض ۳۹۰pt (آیفون ۱۳ معمولی) و
+   کوچک‌تر دست‌نخورده می‌ماند تا چیزی از لبه بیرون نزند. */
+@media (min-width: 414px) {
+  :root {
+    --ui-scale: 1.07;
+    --touch-target-min: 48px;
+    --bottom-nav-height: 68px;
+    --header-height: 60px;
+  }
+}

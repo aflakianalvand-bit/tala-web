@@ -1,0 +1,542 @@
+/* components.css — کتابخانه کامپوننت‌های Reusable */
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), opacity var(--transition-fast), transform var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+/* بازخورد لمس: فشرده‌شدن کوتاه (با کاهش حرکت خاموش — base.css). */
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn--primary { background: var(--color-primary); color: var(--color-primary-contrast); box-shadow: var(--shadow-sm); }
+.btn--primary:active:not(:disabled) { background: var(--color-primary-dark); }
+.btn--secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border-strong); }
+.btn--secondary:active:not(:disabled) { background: var(--color-surface-alt); }
+.btn--danger { background: var(--color-danger); color: var(--color-on-danger); }
+.btn--ghost { background: transparent; color: var(--color-primary); }
+.btn--full { width: 100%; }
+/* کوچک فقط در ظاهر (فونت و فاصله)؛ هدف لمسی همچنان ≥ ۴۸px (Phase 24). */
+.btn--sm { min-height: var(--touch-target-min); padding: 0 var(--space-3); font-size: var(--font-size-sm); }
+
+/* ---------- Form Field / Input / Select ---------- */
+.field { margin-bottom: var(--space-4); }
+.field__label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+}
+.field__hint { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+.field__error { font-size: var(--font-size-xs); color: var(--color-danger); margin-top: var(--space-1); }
+
+.input, .select {
+  width: 100%;
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  /* Phase 24 — فیلد همیشه مات و پرکنتراست، حتی داخل مودال شیشه‌ای؛
+     لبه با --color-border-strong تا مرز فیلد ≥ ۳:۱ دیده شود (WCAG 1.4.11). */
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-field);
+  color: var(--color-text);
+  /* ۱۶px ثابت — کوچک‌تر از این، Safari روی iOS هنگام فوکوس زوم می‌کند
+     (توضیح کامل کنار --font-size-input در variables.css). */
+  font-size: var(--font-size-input);
+  /* ظاهر پیش‌فرض iOS (گوشه‌ی گرد و سایه‌ی داخلی) حذف شود */
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* پیکان Select در RTL سمت چپ می‌نشیند؛ بدون فضای کافی روی متن می‌افتد */
+.select { padding-inline-end: var(--space-3); padding-inline-start: var(--space-5); }
+.input:focus, .select:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid color-mix(in srgb, var(--focus-ring) 35%, transparent);
+  outline-offset: 0;
+}
+.input::placeholder { color: var(--color-text-muted); opacity: 1; }
+.input[dir="ltr"] { text-align: left; }
+.field--invalid .input, .field--invalid .select { border-color: var(--color-danger); }
+
+.textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-size: var(--font-size-input);
+  font-family: inherit;
+  resize: vertical;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.textarea:focus { border-color: var(--color-primary); }
+
+/* ---------- Switch (Toggle) ---------- */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--touch-target-min);
+  cursor: pointer;
+}
+.switch-row__label { font-size: var(--font-size-base); font-weight: 600; color: var(--color-text); }
+.switch-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track {
+  position: relative;
+  width: 50px; height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--switch-knob);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+.switch-input:checked + .switch-track { background: var(--color-primary); }
+.switch-input:checked + .switch-track::after { transform: translateX(-20px); }
+.switch-input:focus-visible + .switch-track { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---------- Card ---------- */
+/* کارت شیشه‌ای: شفافیت + حاشیه‌ی نور، بدون blur (پشتش فقط زمینه است). */
+.card {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+}
+.card--flat { box-shadow: var(--glass-highlight); }
+.card--shadow { box-shadow: var(--shadow-sm); }
+
+.kpi-card {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.kpi-card__label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.kpi-card__value { font-size: var(--font-size-xl); font-weight: 700; }
+.kpi-card__value.num { direction: ltr; }
+
+/* ---------- Table ---------- */
+/* جدول همیشه مات (Phase 24): ستون‌های عدد روی سطح پرکنتراست. */
+.table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); background: var(--color-surface); }
+.table th, .table td { padding: var(--space-3); text-align: right; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.table th { background: var(--color-surface-alt); font-weight: 700; color: var(--color-text-muted); }
+.table tr:last-child td { border-bottom: none; }
+
+/* ---------- Alert ---------- */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+.alert--info { background: var(--color-primary-bg); color: var(--color-primary-dark); }
+.alert--success { background: var(--color-success-bg); color: var(--color-success); }
+.alert--warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.alert--danger { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* ---------- Empty State ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+}
+.empty-state__icon { font-size: 2.5rem; margin-bottom: var(--space-3); }
+.empty-state__title { font-size: var(--font-size-base); font-weight: 700; color: var(--color-text); margin-bottom: var(--space-1); }
+.empty-state__desc { font-size: var(--font-size-sm); margin-bottom: var(--space-4); }
+
+/* ---------- Loading State ---------- */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+}
+.spinner {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed;
+  /* Phase 16 — صفحه‌کلید iOS ارتفاع layout viewport را تغییر نمی‌دهد، پس
+     مودالِ چسبیده به پایین زیر صفحه‌کلید پنهان می‌شد. --kb-inset را
+     utils/viewport.js از visualViewport پر می‌کند. */
+  inset: 0 0 var(--kb-inset) 0;
+  background: var(--overlay-bg);
+  animation: fade-in var(--motion-base) var(--ease-out);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 0;
+}
+@media (min-width: 480px) {
+  .modal-overlay { align-items: center; padding: var(--space-4); }
+}
+.modal {
+  /* Phase 24 — مودال شیشه‌ای و مات‌تر از کارت (≥ ۰٫۹۴): روی آن فرم و عدد است. */
+  background: var(--glass-bg-modal);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-line);
+  border-bottom: none;
+  animation: sheet-up var(--motion-slow) var(--ease-out);
+  width: 100%;
+  max-width: 480px;
+  /* ⚠️ محدودیت ارتفاع باید نسبت به **فضای باقیمانده‌ی روی صفحه** باشد، نه کل
+     صفحه. با صفحه‌کلید باز، ارتفاع overlay برابر (صفحه − صفحه‌کلید) است؛ اگر
+     اینجا فقط 90dvh بنویسیم، جعبه‌ی مودال بلندتر از overlay می‌شود و چون
+     align-items: flex-end است، **از بالا** بیرون می‌زند: عنوان مودال، دکمه‌ی
+     بستن و چند فیلد اول کاملاً خارج از صفحه و غیرقابل دسترس می‌شوند.
+     (اندازه‌گیری‌شده در بازبینی تصویری Phase 16: top = ‎-299px روی آیفون ۱۳ پرو مکس) */
+  /* Phase 20 — سقف ارتفاع باید فضای امن **بالا** را هم کنار بگذارد.
+     چون مودال با align-items: flex-end به پایین چسبیده است، کم‌کردن ارتفاع
+     یعنی بالای جعبه پایین می‌آید. بدون این، عنوان مودال و دکمه‌ی بستن دقیقاً
+     زیر نوار ابزار شناور اپلیکیشن میزبان (Documents) می‌رفتند و لمس «بستن»
+     در واقع «برگشت» میزبان را می‌زد. در Safari و حالت نصب‌شده --safe-top
+     برابر ناچ است و نتیجه مثل قبل باقی می‌ماند. */
+  max-height: min(90dvh, calc(100% - var(--safe-top)));
+  overflow-y: auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-5) var(--space-4) calc(var(--space-5) + var(--safe-bottom));
+  overscroll-behavior: contain;
+  box-shadow: var(--glass-highlight), var(--shadow-lg);
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+@media (min-width: 480px) {
+  .modal { border-radius: var(--radius-lg); }
+}
+.modal__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.modal__title { font-size: var(--font-size-lg); font-weight: 700; }
+.modal__close {
+  background: var(--color-surface-alt);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  cursor: pointer;
+  color: var(--color-text);
+}
+.modal__actions { display: flex; gap: var(--space-3); margin-top: var(--space-5); }
+.modal__actions .btn { flex: 1; }
+
+/* Sheet تمام‌قد — برای صفحه جزئیات موجودیت (مشتری/تأمین‌کننده) روی iPhone */
+/* min-height هم باید سقف داشته باشد: min-height بر max-height غلبه می‌کند،
+   پس بدون min() جعبه با صفحه‌کلید باز به‌زور ۸۰٪ صفحه بلند می‌ماند. */
+.modal--full {
+  max-width: 640px;
+  max-height: min(96dvh, calc(100% - var(--safe-top)));
+  min-height: min(80dvh, calc(100% - var(--safe-top)));
+}
+
+/* ---------- Tabs ---------- */
+.tabs__bar {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-4);
+  scrollbar-width: none;
+}
+.tabs__bar::-webkit-scrollbar { display: none; }
+.tabs__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tabs__tab--active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.tabs__count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 18px;
+  text-align: center;
+}
+.tabs__tab--active .tabs__count { background: var(--color-primary-bg); color: var(--color-primary-dark); }
+
+/* ---------- Toast ---------- */
+.toast-container {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-3));
+  right: var(--space-4); left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 200;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--toast-fg);
+  background: var(--toast-bg);
+  box-shadow: var(--shadow-md);
+  animation: toast-in var(--transition-base);
+}
+.toast--success { background: var(--color-success); color: var(--color-on-success); }
+.toast--danger { background: var(--color-danger); color: var(--color-on-danger); }
+.toast--warning { background: var(--color-warning); color: var(--color-on-warning); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---------- Badge ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+.badge--success { background: var(--color-success-bg); color: var(--color-success); }
+.badge--warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.badge--danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.badge--overdue { background: var(--color-overdue-bg); color: var(--color-overdue); }
+.badge--neutral { background: var(--color-surface-alt); color: var(--color-text-muted); }
+
+/* ---------- Fatal error (bootstrap failure) ---------- */
+.fatal-error {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-danger);
+  font-size: var(--font-size-base);
+}
+
+/* ---------- KPI Tile (Phase 13 — داشبورد) ---------- */
+.kpi-card__caption {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.kpi-card__value--danger { color: var(--color-danger); }
+.kpi-card__value--success { color: var(--color-success); }
+.kpi-card__value--warning { color: var(--color-warning); }
+.kpi-card__value--muted { color: var(--color-text-muted); }
+/* مبالغ فشرده («۱٫۲۵ میلیارد ریال») از --font-size-xl روی ۳۹۰px بیرون می‌زنند. */
+.kpi-card__value { font-size: var(--font-size-lg); line-height: 1.4; }
+/* `num` جهت ارقام را LTR می‌کند؛ بدون این، تراز متن هم به چپ می‌افتد و کارت
+   عددی با کارت مبلغی ناهماهنگ می‌شود. */
+.kpi-card__value.num { text-align: right; }
+.kpi-card--wide { grid-column: 1 / -1; }
+.kpi-card--tap {
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.kpi-card--tap:active { transform: scale(0.985); }
+.kpi-card--tap:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ── Phase 22: میان‌بر عیارهای رایج زیر فیلد «عیار» ── */
+.karat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.karat-chip {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-field);
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  direction: ltr;
+}
+.karat-chip:active { background: var(--color-primary-bg); }
+
+/* Phase 23 — معادل ۷۵۰ زنده زیر وزن/عیار خط طلا (UI_GUIDELINES §6.14) */
+.gold-equiv {
+  grid-column: 1 / -1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+/* فهرست مدیریت آزمایشگاه‌ها در صفحه‌ی تنظیمات */
+.lab-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+.lab-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md, 8px);
+}
+.lab-row__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.lab-row--inactive .lab-row__name { color: var(--color-text-muted); text-decoration: line-through; }
+
+/* ─────────── Phase 24: فیلد و برگه‌ی انتخاب تاریخ شمسی (UI_GUIDELINES §6.16) ─────────── */
+.date-field__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: right;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+.date-field__button--empty .date-field__text { color: var(--color-text-muted); font-weight: 400; }
+.date-field__icon { font-size: 1.1rem; line-height: 1; }
+
+.jdp-overlay {
+  position: fixed;
+  inset: 0 0 var(--kb-inset) 0;
+  z-index: 150;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--overlay-bg);
+  animation: fade-in var(--motion-base) var(--ease-out);
+}
+@media (min-width: 480px) {
+  .jdp-overlay { align-items: center; padding: var(--space-4); }
+}
+.jdp {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100% - var(--safe-top));
+  overflow-y: auto;
+  /* حاشیه‌ی افقی ۱۲px: روی ۳۹۰px هر سلول روز ≥ ۴۸px عرض می‌گیرد. */
+  padding: var(--space-4) var(--space-3) calc(var(--space-4) + var(--safe-bottom));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--glass-bg-modal);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-highlight), var(--shadow-lg);
+  animation: sheet-up var(--motion-slow) var(--ease-out);
+}
+@media (min-width: 480px) { .jdp { border-radius: var(--radius-lg); } }
+.jdp__head { margin-bottom: var(--space-3); }
+.jdp__title { font-size: var(--font-size-lg); font-weight: 700; }
+.jdp__current { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.jdp__nav {
+  display: grid;
+  grid-template-columns: var(--touch-target-min) 1fr 1fr var(--touch-target-min);
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.jdp__navbtn {
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.jdp__nav .select { min-width: 0; font-weight: 600; }
+.jdp__week, .jdp__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.jdp__week {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-1) 0;
+}
+.jdp__friday { color: var(--color-danger); }
+/* هر روز یک سلول مات و پرکنتراست ≥ ۴۸px — عدد هرگز روی شیشه‌ی شفاف نمی‌نشیند. */
+.jdp__grid {
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.jdp__day {
+  min-height: var(--touch-target-min);
+  min-width: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.jdp__day:active { transform: scale(0.94); background: var(--color-surface-alt); }
+.jdp__day--friday { color: var(--color-danger); }
+.jdp__day--today { border-color: var(--color-primary); }
+.jdp__day--selected,
+.jdp__day--selected.jdp__day--friday {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-color: var(--color-primary);
+}
+.jdp__foot {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.jdp__foot .btn { flex: 1; }

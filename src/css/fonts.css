@@ -1,0 +1,32 @@
+/* fonts.css — فونت فارسی Vazirmatn، میزبانی‌شده داخل خود پروژه (Phase 16)
+ *
+ * چرا self-hosted و نه CDN؟ برنامه باید کاملاً آفلاین کار کند. فونتی که از
+ * اینترنت می‌آید، در حالت آفلاین بارگذاری نمی‌شود و رابط با فونت سیستمی
+ * جایگزین رندر می‌شود — یعنی دقیقاً همان حالتی که می‌خواستیم از آن فاصله
+ * بگیریم. این دو فایل در پیش‌کش Service Worker هم هستند.
+ *
+ * چرا فقط دو وزن؟ برنامه فقط از ۴۰۰ (متن) و ۷۰۰ (عنوان/مبلغ) استفاده می‌کند.
+ * هر وزن اضافه حدود ۵۰ کیلوبایت به حجم آفلاین اضافه می‌کرد بدون استفاده.
+ *
+ * وزن ۶۰۰ در CSS پروژه (دکمه‌ها، برچسب فیلدها) عمداً به همین فایل Bold نگاشت
+ * شده است؛ بدون این نگاشت، Safari وزن ۶۰۰ را «مصنوعی» ضخیم می‌کند و لبه‌ی
+ * حروف فارسی مخدوش می‌شود.
+ *
+ * مجوز: SIL Open Font License 1.1 — متن کامل در src/fonts/OFL.txt
+ */
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}

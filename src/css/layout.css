@@ -1,0 +1,955 @@
+/* layout.css — اسکلت اپلیکیشن، هدر، Bottom Navigation، Outlet
+ *
+ * Phase 24 — «شیشه‌ی سبک»: فقط هدر، نوار پایین، کارت و مودال شیشه‌اند.
+ *   - هدر و نوار پایین روی محتوای در حال اسکرول می‌نشینند ⇒ blur واقعی.
+ *   - کارت‌ها چیزی جز زمینه پشتشان نیست ⇒ فقط شفافیت + حاشیه‌ی نور، بدون
+ *     backdrop-filter (blur روی ده‌ها کارت فهرست، هزینه‌ی GPU بی‌فایده روی آیفون است).
+ *   - فیلد، جدول، نوار خلاصه و جعبه‌ی اعداد مات‌اند (--color-surface / --color-field).
+ */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /* Phase 16 — در حالت نصب‌شده روی iPhone، وب‌ویو تمام صفحه است و ساعت/باتری
+     روی هدر می‌افتند مگر اینکه فضای امن بالا به ارتفاع هدر اضافه شود. */
+  height: calc(var(--header-height) + var(--safe-top));
+  padding-top: var(--safe-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-inline: max(var(--space-4), var(--safe-left)) max(var(--space-4), var(--safe-right));
+  padding-bottom: 0;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-line);
+  box-shadow: var(--glass-highlight);
+}
+.app-header__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+.app-header__status {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.app-header__status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+}
+.app-header__status-dot.is-offline { background: var(--color-warning); }
+
+/* ---------- Outlet ---------- */
+.app-outlet {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  /* فضای پایین = ارتفاع Bottom Nav + نوار Home + نفس‌گیر.
+     بدون --safe-bottom، آخرین دکمه‌ی هر فهرست روی iPhone 13 Pro Max دقیقاً
+     زیر نوار Home می‌افتد و لمس آن به جای دکمه، ژست خروج از برنامه می‌شود. */
+  padding-top: var(--space-4);
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-6));
+  padding-inline: max(var(--space-4), var(--safe-left)) max(var(--space-4), var(--safe-right));
+}
+
+/* ---------- Bottom Navigation ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; right: 0; left: 0;
+  height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  padding-inline: var(--safe-left) var(--safe-right);
+  display: flex;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-top: 1px solid var(--glass-line);
+  z-index: 30;
+  box-shadow: var(--glass-highlight), var(--shadow-nav);
+}
+.bottom-nav__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--touch-target-min);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--transition-fast);
+}
+.bottom-nav__item.is-active { color: var(--color-primary); font-weight: 700; }
+.bottom-nav__icon {
+  font-size: calc(1.3rem * var(--ui-scale));
+  line-height: 1;
+  padding: 3px 14px;
+  border-radius: var(--radius-pill);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+/* آیتم فعال: «قرص» پشت آیکن — فعال بودن فقط با رنگ اعلام نمی‌شود (WCAG 1.4.1). */
+.bottom-nav__item.is-active .bottom-nav__icon { background: var(--color-primary-bg); }
+.bottom-nav__item:active .bottom-nav__icon { transform: scale(0.92); }
+
+/* ---------- Page Header ---------- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  gap: var(--space-2);
+}
+.page-header h1 { font-size: var(--font-size-xl); margin: 0; }
+.page-header__subtitle { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+
+/* ---------- KPI Grid (Dashboard) ---------- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+@media (min-width: 480px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---------- Section ---------- */
+.section { margin-bottom: var(--space-5); }
+.section__title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+}
+
+/* ---------- Products (Phase 3) ---------- */
+.product-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.product-filters .field { margin-bottom: 0; }
+.product-filters__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+/* لیست/کارت عمومی موجودیت — پایه‌ی مشترک کالا (Phase 3) و مشتری/تأمین‌کننده (Phase 4+) */
+.product-list,
+.entity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.product-card,
+.entity-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: right;
+  font-family: inherit;
+}
+.product-card:active,
+.entity-card:active { background: var(--color-surface-alt); transform: scale(0.99); }
+.product-card__main,
+.entity-card__main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.product-card__title,
+.entity-card__title { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.product-card__name,
+.entity-card__name { font-weight: 700; font-size: var(--font-size-base); }
+.product-card__meta,
+.entity-card__meta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.product-card__side,
+.entity-card__side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+
+/* مبلغ مانده روی کارت مشتری/تأمین‌کننده */
+.entity-card__amount { font-weight: 700; font-size: var(--font-size-base); white-space: nowrap; }
+.entity-card__amount--danger { color: var(--color-danger); }
+.entity-card__amount--success { color: var(--color-success); }
+.entity-card__amount--neutral { color: var(--color-text-muted); }
+.entity-card__amount-label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+/* نوار خلاصه بالای فهرست (مطالبات/بدهی/تعداد) */
+.summary-bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  overflow-x: auto;
+}
+.summary-bar__item {
+  flex: 1 0 auto;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.summary-bar__label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.summary-bar__value { font-weight: 700; font-size: var(--font-size-sm); white-space: nowrap; }
+.summary-bar__value--danger { color: var(--color-danger); }
+.summary-bar__value--success { color: var(--color-success); }
+
+/* سربرگ صفحه جزئیات موجودیت */
+.entity-head { margin-bottom: var(--space-3); }
+.entity-head__name { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: var(--space-2); }
+.entity-head__badges { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+/* کارت‌های مانده (ریالی / طلا) در تب اطلاعات */
+.balance-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.balance-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+}
+.balance-card--danger { background: var(--color-danger-bg); border-color: var(--color-danger-bg); }
+.balance-card--success { background: var(--color-success-bg); border-color: var(--color-success-bg); }
+.balance-card__title { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.balance-card__amount { font-size: var(--font-size-lg); font-weight: 700; margin-top: 2px; }
+.balance-card--danger .balance-card__amount { color: var(--color-danger); }
+.balance-card--success .balance-card__amount { color: var(--color-success); }
+.balance-card__state { font-size: var(--font-size-sm); font-weight: 600; }
+.balance-card__note { margin-top: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); line-height: 1.5; }
+
+/* ---------- Product Detail ---------- */
+.detail-rows { display: flex; flex-direction: column; }
+.detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-row__label { color: var(--color-text-muted); flex-shrink: 0; }
+.detail-row__value { font-weight: 600; text-align: left; }
+
+.history-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.history-entry {
+  border-inline-start: 2px solid var(--color-border);
+  padding-inline-start: var(--space-3);
+}
+.history-entry__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font-size: var(--font-size-sm); font-weight: 700; }
+.history-entry__date { color: var(--color-text-muted); font-weight: 400; font-size: var(--font-size-xs); }
+.history-entry__changes { margin-top: var(--space-1); display: flex; flex-direction: column; gap: 2px; }
+.history-entry__change { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.history-entry__change b { color: var(--color-text); font-weight: 600; }
+
+/* ---------- More Menu list ---------- */
+.menu-list {
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--glass-line);
+}
+.menu-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  background: none;
+  width: 100%;
+  text-align: right;
+  font-size: var(--font-size-base);
+}
+.menu-list__item:last-child { border-bottom: none; }
+.menu-list__item:active { background: var(--color-surface-alt); }
+
+/* ───────────────── ماژول خرید (Phase 6) ───────────────── */
+
+/* فرم چندبخشی سند (خرید/فروش): بخش اقلام و پرداخت‌ها */
+.purchase-form { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--space-3); }
+.form-grid .field { margin-bottom: var(--space-3); }
+@media (max-width: 380px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-section {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+.form-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.form-section__head .section__title { margin: 0; }
+
+/* کارت یک قلم کالا یا یک پرداخت */
+.doc-line {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.doc-line--payment { background: var(--color-primary-bg); }
+.doc-line__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+.doc-line__title { font-weight: 700; font-size: var(--font-size-sm); }
+.doc-line__note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: var(--space-2);
+}
+
+/* نوار جمع فاکتور — همیشه دیده می‌شود چون تصمیم کاربر به آن وابسته است */
+.purchase-totals {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  z-index: 1;
+}
+
+.purchase-card .entity-card__side { align-items: flex-end; gap: var(--space-1); }
+
+.text-danger { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+
+/* ماژول فروش (Phase 7) — روی همان اجزای مشترک فرم سند سوار است */
+.sale-card .entity-card__side { gap: var(--space-1); }
+.sale-form .purchase-totals { flex-wrap: wrap; }
+/* Phase 24 — با فونت پایه‌ی بزرگ‌تر، نوار جمعِ چسبان در دو ستون تا ۶۰٪ مودال را
+   می‌پوشاند. سه ستونِ فشرده (با اجازه‌ی شکستن عدد) همان اعداد را در نصف ارتفاع
+   نشان می‌دهد. نوار مات می‌ماند (--color-surface): عدد روی شیشه نمی‌نشیند. */
+.purchase-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  box-shadow: var(--shadow-md);
+}
+.purchase-totals .summary-bar__item { min-width: 0; padding: 4px var(--space-2); gap: 0; }
+.purchase-totals .summary-bar__label { line-height: 1.5; }
+.purchase-totals .summary-bar__value { white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
+
+/* ── Phase 11: ستون اقدامات درون جدول (ویرایش تخصیص / ابطال سند تسویه) ── */
+.row-actions {
+  display: flex;
+  gap: var(--space-1, 4px);
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ---------- سررسید و هشدار (Phase 12) ---------- */
+/* نوار رنگی سمت شروع کارت، طبق UI_GUIDELINES §2 (نزدیک = زرد، امروز/گذشته = قرمز). */
+.due-card { border-inline-start-width: 4px; }
+.due-card--overdue { border-inline-start-color: var(--color-overdue); }
+.due-card--today { border-inline-start-color: var(--color-danger); }
+.due-card--near { border-inline-start-color: var(--color-warning); }
+.due-card--future { border-inline-start-color: var(--color-border); }
+.due-card--settled,
+.due-card--voided { border-inline-start-color: var(--color-success-bg); opacity: 0.85; }
+.due-card--overdue .due-card__days { color: var(--color-overdue); font-weight: 700; }
+.due-card--today .due-card__days { color: var(--color-danger); font-weight: 700; }
+.due-card--near .due-card__days { color: var(--color-warning); font-weight: 600; }
+.due-alerts__head { margin-bottom: var(--space-2); }
+.due-alerts__head .section__title { margin-bottom: 0; }
+.due-group { margin-bottom: var(--space-4); }
+.due-group--overdue > .section__title { color: var(--color-overdue); }
+.due-group--today > .section__title { color: var(--color-danger); }
+
+/* ---------- Reports (Phase 14) ---------- */
+.report__head { margin-bottom: var(--space-3); }
+.report__title { font-size: var(--font-size-lg); font-weight: 700; margin: 0; }
+.report__range { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-top: 2px; }
+/* روی گوشی، نوار خلاصه‌ی گزارش به‌جای اسکرول افقی در دو ستون می‌پیچد تا هیچ عددی پنهان نماند */
+.report__summary { flex-wrap: wrap; overflow-x: visible; }
+.report__summary .summary-bar__item { flex: 1 1 calc(50% - var(--space-2)); min-width: 0; }
+.report__summary .summary-bar__value { white-space: normal; overflow-wrap: anywhere; }
+.report__section { margin-top: var(--space-4); }
+.report__note { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+.report__notes { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+.table tfoot td {
+  font-weight: 700;
+  background: var(--color-surface-alt);
+  border-top: 2px solid var(--color-border);
+  border-bottom: none;
+}
+.table tr.report-row--strong td { font-weight: 700; }
+
+/* ---------- داشبورد (Phase 13) ---------- */
+
+/* کارت قهرمان: موجودی طلا — اولین چیزی که مدیر می‌بیند. */
+.gold-hero {
+  background: linear-gradient(135deg, var(--color-primary-bg), var(--glass-bg-card));
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.gold-hero__label { font-size: var(--font-size-sm); color: var(--color-primary-dark); font-weight: 700; }
+.gold-hero__value { font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-text); }
+.gold-hero__sub { font-size: var(--font-size-base); color: var(--color-text-muted); }
+.gold-hero__note { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
+
+.kpi-chips {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  overflow-x: auto;
+}
+.kpi-chip {
+  flex: 1 0 auto;
+  min-width: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.kpi-chip__label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.kpi-chip__value { font-size: var(--font-size-sm); font-weight: 700; white-space: nowrap; }
+
+/* کلید بازه‌ی عملکرد */
+.period-switch {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-2);
+}
+.period-switch__btn {
+  flex: 1;
+  min-height: var(--touch-target-min);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.period-switch__btn--active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.period-switch__range {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+
+/* Phase 15 — صفحه‌ی پشتیبان: تنها افزوده‌ی CSS این فاز (فاصله‌ی نتیجه‌ی بازگردانی). */
+.backup-result:not(:empty) { margin-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* ═══════════════ Phase 16 — PWA و آیفون ═══════════════ */
+
+/* ---------- اقدامات هدر: وضعیت اتصال + کلید پشتیبان ---------- */
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* کلید پشتیبان — الزام Phase 16: پشتیبان‌گیری باید «کاملاً واضح» باشد.
+   در منوی «بیشتر» بودن کافی نیست؛ اینجا در تمام صفحه‌ها دیده می‌شود و
+   وقتی از آخرین پشتیبان زیاد گذشته باشد، رنگ هشدار می‌گیرد. */
+.header-backup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* کلید آیکنی گرد هدر (تم) — ۴۸×۴۸ */
+.header-icon-btn {
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--transition-fast);
+}
+.header-icon-btn:active { transform: scale(0.92); }
+.theme-switch { margin: var(--space-2) 0 0; }
+.header-backup__icon { font-size: 1rem; line-height: 1; }
+.header-backup:active { background: var(--color-border); }
+.header-backup--due {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+.header-backup--never {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ---------- نوار به‌روزرسانی نسخه (Service Worker) ---------- */
+.update-bar {
+  position: fixed;
+  right: var(--space-3);
+  left: var(--space-3);
+  bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-3));
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--toast-bg);
+  color: var(--toast-fg);
+  box-shadow: var(--shadow-md);
+  font-size: var(--font-size-sm);
+}
+.update-bar__text { flex: 1; }
+.update-bar__btn {
+  flex-shrink: 0;
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- بنر «افزودن به صفحه‌ی اصلی» ---------- */
+.install-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-bg);
+}
+.install-banner__body { flex: 1; min-width: 0; }
+.install-banner__title { font-weight: 700; font-size: var(--font-size-sm); color: var(--color-primary-dark); }
+.install-banner__text { font-size: var(--font-size-xs); color: var(--color-text-muted); line-height: 1.6; margin-top: 2px; }
+.install-banner__actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.install-banner__close {
+  flex-shrink: 0;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* ---------- صفحه‌ی «نصب روی آیفون» ---------- */
+.install-steps { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
+.install-step { display: flex; gap: var(--space-3); align-items: flex-start; }
+.install-step__num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.install-step__body { flex: 1; font-size: var(--font-size-sm); line-height: 1.7; }
+.install-step__body b { font-weight: 700; }
+
+.status-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--font-size-sm);
+}
+.status-item__label { color: var(--color-text-muted); }
+.status-item__value { font-weight: 700; text-align: left; }
+.status-item--ok .status-item__value { color: var(--color-success); }
+.status-item--warn .status-item__value { color: var(--color-warning); }
+.status-item--bad .status-item__value { color: var(--color-danger); }
+
+/* نوار مصرف فضای ذخیره‌سازی */
+.storage-meter {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+.storage-meter__fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-pill); }
+
+/* ---------- ریزتنظیم‌های حالت نصب‌شده ---------- */
+/* در حالت standalone هیچ نوار آدرسی وجود ندارد که کاربر با آن صفحه را Refresh
+   کند؛ پس وضعیت آفلاین/به‌روزرسانی باید داخل خود رابط دیده شود. */
+@media (display-mode: standalone) {
+  .app-header { box-shadow: none; }
+  .install-banner { display: none; }
+}
+
+/* ═════════════════ Phase 25 — ناوبری چهارقسمتی + صفحه‌ی قیمت (UI_GUIDELINES §6.17) ═════════════════ */
+
+/* آیتم برجسته‌ی «عملیات»: دایره‌ی طلایی کمی بالاتر از نوار. برچسب زیرش می‌ماند تا
+   معنای «+» فقط به شکل وابسته نباشد. */
+.bottom-nav__item--primary { color: var(--color-text); }
+.bottom-nav__item--primary .bottom-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  margin-top: -20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: calc(1.75rem * var(--ui-scale));
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+  border: 3px solid var(--color-bg);
+}
+.bottom-nav__item--primary.is-active .bottom-nav__icon {
+  background: var(--color-primary-dark);
+  color: var(--color-primary-contrast);
+}
+.bottom-nav__label { line-height: 1.3; }
+
+/* پیوند بازگشت بالای زیرصفحه‌ها */
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-4) 0 var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--glass-line);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-highlight);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.page-back__arrow { font-size: var(--font-size-lg); line-height: 1; }
+
+/* کاشی‌های پیمایش */
+.nav-tiles { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
+.nav-tiles--strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.nav-tiles--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.nav-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 72px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-line);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+.nav-tile:active { transform: scale(0.97); }
+.nav-tile__icon { font-size: calc(1.5rem * var(--ui-scale)); line-height: 1; }
+.nav-tile__title { font-size: var(--font-size-sm); font-weight: 700; }
+.nav-tiles--strip .nav-tile__title { font-size: var(--font-size-xs); white-space: nowrap; }
+.nav-tiles--grid .nav-tile {
+  align-items: flex-start;
+  text-align: right;
+  min-height: 96px;
+  padding: var(--space-3);
+}
+.nav-tile__hint { font-size: var(--font-size-xs); color: var(--color-text-muted); line-height: 1.5; }
+
+/* صفحه‌ی عملیات: کاشی‌های بزرگ ثبت سند */
+.op-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); }
+.op-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  min-height: 128px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-line);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+.op-tile:active { transform: scale(0.97); }
+/* فروش: پرتکرارترین سند — تنها کاشی پُررنگ. */
+.op-tile--sale { background: var(--color-primary); color: var(--color-primary-contrast); border-color: var(--color-primary); }
+.op-tile--sale .op-tile__hint { color: var(--color-primary-contrast); }
+/* کاشی پنجم تمام‌عرض، تا شبکه‌ی دوستونی خانه‌ی خالی نداشته باشد. */
+.op-tile:last-child:nth-child(odd) { grid-column: 1 / -1; min-height: 88px; }
+.op-tile__icon { font-size: calc(2rem * var(--ui-scale)); line-height: 1; margin-bottom: auto; }
+.op-tile__title { font-size: var(--font-size-lg); font-weight: 800; }
+.op-tile__hint { font-size: var(--font-size-xs); color: var(--color-text-muted); line-height: 1.5; }
+
+/* برگه‌ی انتخاب (ذوب/اصلاح، صندوق) */
+.op-choices { display: flex; flex-direction: column; gap: var(--space-2); }
+.op-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+.op-choice:active { background: var(--color-surface-alt); }
+.op-choice__icon { font-size: calc(1.5rem * var(--ui-scale)); }
+.op-choice__text { display: flex; flex-direction: column; }
+.op-choice__title { font-size: var(--font-size-base); font-weight: 700; }
+.op-choice__hint { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+
+/* انتخاب طرف حساب برای تسویه */
+.party-picker { display: flex; flex-direction: column; gap: var(--space-3); }
+.party-picker .period-switch__btn { font-size: var(--font-size-sm); }
+.party-picker__list { max-height: none; }
+.party-picker__code { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+
+/* صفحه‌ی قیمت */
+.price-hero { text-align: center; }
+.price-hero__label { color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: 600; }
+.price-hero__value {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  font-size: calc(2.25rem * var(--ui-scale));
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+.price-hero__value--empty { font-size: var(--font-size-xl); color: var(--color-text-muted); }
+.price-hero__unit { font-size: var(--font-size-base); font-weight: 600; color: var(--color-text-muted); }
+.price-hero__sub { color: var(--color-text-muted); font-size: var(--font-size-xs); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-2); }
+
+.price-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  direction: ltr;
+  white-space: nowrap;
+}
+.price-delta--up { background: var(--color-success-bg); color: var(--color-success); }
+.price-delta--down { background: var(--color-danger-bg); color: var(--color-danger); }
+.price-delta--flat { background: var(--color-surface-alt); color: var(--color-text-muted); direction: rtl; }
+
+.price-form__rate .input { font-size: var(--font-size-xl); font-weight: 700; min-height: 60px; }
+.price-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-3); }
+.price-step {
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.price-step:active { background: var(--color-surface-alt); }
+.price-form__submit { min-height: 56px; font-size: var(--font-size-lg); margin-bottom: var(--space-2); }
+.price-more { margin-top: var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
+.price-more summary {
+  min-height: var(--touch-target-min);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin: var(--space-3) 0; }
+.price-grid__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  min-width: 0;
+}
+.price-grid__label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.price-grid__value { font-size: var(--font-size-sm); font-weight: 700; overflow-wrap: anywhere; }
+.price-custom { font-weight: 700; min-height: 1.5em; }
+.price-custom--error { color: var(--color-danger); font-weight: 600; }
+
+.price-history__list { list-style: none; margin: var(--space-3) 0; padding: 0; }
+.price-history__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target-min);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.price-history__row:last-child { border-bottom: none; }
+.price-history__when { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.price-history__value { display: flex; align-items: center; gap: var(--space-2); font-weight: 700; }
+.price-history__empty { color: var(--color-text-muted); padding: var(--space-3) 0; }
+
+/* ---------- مانده‌ی بد/بس (Phase 26 — UI_GUIDELINES §6.10) ---------- */
+/* عدد و واژه همیشه کنار هم؛ رنگ فقط تقویت معناست. */
+.bal { display: inline-flex; align-items: baseline; gap: 0.35em; white-space: nowrap; font-weight: 700; }
+.bal__word { font-weight: 800; }
+.bal--success { color: var(--color-success); }
+.bal--danger { color: var(--color-danger); }
+.bal--neutral { color: var(--color-text-muted); }
+
+/* ---------- معین حساب صفحه‌ی اصلی (Phase 26) ---------- */
+.ledger-summary .page-header { align-items: center; }
+.ledger-summary .page-header .section__title { margin-bottom: 0; }
+.ledger-summary__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-2);
+}
+.ledger-summary__totals .bal { white-space: normal; }
+.ledger-summary__list {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--touch-target-min);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ledger-row:last-child { border-bottom: none; }
+.ledger-row:active { background: var(--color-surface-alt); }
+.ledger-row__who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ledger-row__name { font-weight: 600; overflow-wrap: anywhere; }
+.ledger-row__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.ledger-row__amounts { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.ledger-row__irr { font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap; }
+.ledger-summary__empty, .ledger-summary__note {
+  padding: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.ledger-summary__switch { margin-top: var(--space-2); }

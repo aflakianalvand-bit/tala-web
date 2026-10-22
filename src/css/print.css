@@ -1,0 +1,203 @@
+/* print.css — برگه‌ی چاپ سند (A5) — Phase 18
+   ═══════════════════════════════════════════════════════════════════════════
+   دو حالت دارد:
+   ۱) روی صفحه: برگه داخل یک پوشش تمام‌صفحه دیده می‌شود تا کاربر پیش از چاپ
+      دقیقاً همان چیزی را ببیند که چاپ می‌شود (نه یک تقریب).
+   ۲) هنگام چاپ: همه‌ی برنامه پنهان می‌شود و فقط برگه می‌ماند.
+   اندازه‌ها با میلی‌متر تعریف شده‌اند نه px، چون مقصد کاغذ است نه نمایشگر.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* هنگام چاپ هیچ اپلیکیشن میزبانی روی کاغذ نیست؛ رزرو فضای «مرورگر میهمان»
+   باید صفر شود وگرنه برگه‌ی A5 با حاشیه‌ی اضافی چاپ می‌شود. */
+@media print {
+  :root { --viewer-top: 0px; --viewer-bottom: 0px; }
+}
+
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #55504a;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(var(--safe-top) + 8px) 8px calc(var(--safe-bottom) + 8px);
+}
+
+.sheet-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+
+.sheet-toolbar__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sheet-toolbar__rate { display: flex; gap: 6px; align-items: center; flex: 1 1 220px; }
+.sheet-toolbar__rate input { min-height: var(--touch-target-min); }
+
+/* ───────────────────────── خودِ برگه ───────────────────────── */
+
+.sheet {
+  --sheet-ink: #111;
+  --sheet-line: #111;
+  /* Phase 24 — کاغذ تم ندارد: برگه در تم تیره هم سفید و مشکی می‌ماند. */
+  color-scheme: light;
+  background: #fff;
+  color: var(--sheet-ink);
+  width: 148mm;
+  min-height: 210mm;
+  margin: 0 auto;
+  padding: 7mm 6mm;
+  box-sizing: border-box;
+  font-family: var(--font-family, inherit);
+  font-size: 3.1mm;
+  line-height: 1.5;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+}
+
+/* روی نمایشگرهای باریک‌تر از A5 برگه باید کوچک شود، وگرنه ۱۴۸mm (≈۵۵۹px)
+   در عرض ۳۹۰px آیفون از دو طرف بیرون می‌زند و بریده دیده می‌شود.
+   نسبت‌ها حفظ می‌شوند چون کاغذ همچنان A5 است.
+
+   چرا `zoom` و نه `transform: scale()`:
+   transform فقط ظاهر را کوچک می‌کند و جعبه‌ی چیدمان همان ۵۵۹px می‌ماند،
+   پس اسکرول افقیِ بی‌دلیل باقی می‌ماند. zoom خودِ جعبه را کوچک می‌کند.
+
+   چرا مقیاس را JS می‌گذارد و نه CSS:
+   CSS نمی‌تواند طول را بر طول تقسیم کند (`calc(100vw / 148mm)` نامعتبر است)،
+   پس DocSheet.js عدد را در `--sheet-scale` می‌نویسد. اگر JS نرسد یا مرورگر
+   zoom نداشته باشد، مقدار پیش‌فرض ۱ است و رفتار دقیقاً مثل قبل می‌ماند. */
+.sheet-host { --sheet-scale: 1; }
+.sheet { zoom: var(--sheet-scale, 1); }
+
+.sheet__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 4mm; }
+.sheet__invocation { font-size: 3.4mm; }
+.sheet__title { font-size: 4.6mm; font-weight: 700; text-align: center; flex: 1; }
+.sheet__meta { display: flex; flex-direction: column; gap: 1.5mm; min-width: 38mm; }
+.sheet__meta-box {
+  border: 0.4mm solid var(--sheet-line);
+  border-radius: 1.5mm;
+  padding: 1mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 3mm;
+}
+
+.sheet__party {
+  margin-top: 3mm;
+  border: 0.4mm solid var(--sheet-line);
+  border-radius: 1.5mm;
+  padding: 1.5mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 3mm;
+  font-size: 3.1mm;
+}
+.sheet__party-type { font-weight: 700; }
+
+.sheet__table {
+  margin-top: 2.5mm;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 3mm;
+}
+.sheet__table th,
+.sheet__table td {
+  border: 0.35mm solid var(--sheet-line);
+  padding: 1mm 1.2mm;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+.sheet__table th { font-weight: 700; text-align: center; background: #efefef; }
+.sheet__table td.c { text-align: center; }
+.sheet__table td.n { text-align: center; direction: ltr; unicode-bidi: plaintext; }
+.sheet__table tbody tr.is-summary td { font-weight: 700; }
+.sheet__table tbody tr.is-summary--first td { border-top: 0.7mm solid var(--sheet-line); }
+.sheet__table tbody tr.is-filler td { border-right: 0.35mm solid var(--sheet-line); border-left: 0.35mm solid var(--sheet-line); border-top: 0; border-bottom: 0; height: 4.2mm; }
+/* قاب جدول همیشه بسته می‌ماند، حتی وقتی آخرین ردیف خالی است. */
+.sheet__table tbody tr:last-child td { border-bottom: 0.35mm solid var(--sheet-line); }
+.sheet__row-note { font-size: 2.6mm; }
+
+.sheet__balance {
+  margin-top: 2.5mm;
+  border: 0.4mm solid var(--sheet-line);
+  border-radius: 1.5mm;
+  padding: 1.2mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 3mm;
+  font-size: 3.2mm;
+  font-weight: 700;
+}
+.sheet__stamp { font-weight: 400; font-size: 2.8mm; }
+
+.sheet__bottom { margin-top: 2mm; display: flex; gap: 3mm; align-items: stretch; }
+.sheet__prevfinal { display: flex; flex-direction: column; gap: 1.5mm; min-width: 46mm; }
+.sheet__prevfinal-box {
+  border: 0.4mm solid var(--sheet-line);
+  border-radius: 1.5mm;
+  padding: 1mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 3mm;
+}
+.sheet__refrates { flex: 1; display: flex; flex-direction: column; gap: 1mm; font-size: 2.9mm; }
+.sheet__refrate { display: flex; justify-content: space-between; gap: 2mm; }
+
+.sheet__terms { margin-top: 3mm; font-size: 2.7mm; line-height: 1.9; text-align: justify; }
+.sheet__signs { margin-top: auto; padding-top: 5mm; display: flex; justify-content: space-between; font-size: 3mm; }
+.sheet__sign-issuer { text-align: right; }
+.sheet__sign-receiver { text-align: left; }
+
+.sheet__warning {
+  margin-top: 2mm;
+  border: 0.4mm dashed #b3261e;
+  color: #b3261e;
+  border-radius: 1.5mm;
+  padding: 1.2mm 2mm;
+  font-size: 2.8mm;
+}
+
+/* ───────────────────────── حالت چاپ ───────────────────────── */
+
+@page {
+  size: A5 portrait;
+  margin: 6mm;
+}
+
+@media print {
+  html, body { background: #fff !important; }
+  body.is-printing-sheet > *:not(.sheet-overlay) { display: none !important; }
+  body.is-printing-sheet .sheet-overlay {
+    position: static;
+    background: #fff;
+    padding: 0;
+    overflow: visible;
+  }
+  body.is-printing-sheet .sheet-toolbar { display: none !important; }
+  body.is-printing-sheet .sheet {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+    /* مقیاس نمایشگر روی کاغذ معنا ندارد؛ کاغذ خودش A5 است. */
+    zoom: 1;
+  }
+  .sheet__table thead { display: table-header-group; }
+  .sheet__table tr { break-inside: avoid; }
+}
