@@ -254,6 +254,7 @@ export async function getDashboard({ period = DEFAULT_PERIOD, today = new Date()
       bookValueIRR: nz(Math.round(inventoryTotal.bookValueIRR)),
       unrealizedIRR: nz(Math.round(inventoryTotal.unrealizedIRR)),
       bucketCount: inventoryTotal.buckets,
+      shortages: buckets.filter((b) => b.grams < -GRAM_EPS).map((b) => ({ refId: b.refId, label: b.label, grams: roundGrams(b.grams) })),
       byType: byType.map((t) => ({
         goldType: t.goldType,
         label: t.label,

@@ -58,6 +58,7 @@ import {
   dueDateStatusOf,
   roundIRR,
   partyInvoices,
+  outstandingByInvoice,
 } from './allocations.js';
 import { getDueItem } from './dueDates.js';
 import {
@@ -385,7 +386,7 @@ export async function availableStock() {
 
 // ───────────────────────── آماده‌سازی ثبت فاکتور ─────────────────────────
 
-async function prepareCreate(rawInput, { inventoryAdjust = new Map(), amendsSaleId = null } = {}) {
+async function prepareCreate(rawInput, { inventoryAdjust = new Map(), amendsSaleId = null, allowShortage = false } = {}) {
   // ترتیب مهم است: پیکربندی موتور قیمت پیش از اعتبارسنجی خوانده می‌شود تا قلمی که
   // نرخش وارد نشده، نرخ روزِ عیار خودش را بگیرد و بعد اعتبارسنجی شود (Phase 8).
   const pricingConfig = await loadPricingConfig();
@@ -459,8 +460,10 @@ async function prepareCreate(rawInput, { inventoryAdjust = new Map(), amendsSale
   if (!validationError.isEmpty) throw validationError;
 
   // کنترل موجودی — بلاک‌کننده، پیش از هر نوشتنی
+  // (Phase 30، تصمیم کاربر) فروش تلفنی پیش از خرید واقعی است: کمبود با تأیید صریح پذیرفته و روی
+  // سند ثبت می‌شود (`soldShort`) تا کسری انبار رد داشته باشد. بدون تأیید همچنان خطا می‌دهد.
   const shortages = await findStockShortages(totals.lines, inventoryAdjust);
-  if (shortages.length) throw new InsufficientStockError(shortages);
+  if (shortages.length && !allowShortage) throw new InsufficientStockError(shortages);
 
   // ── ساخت رکوردها ──
   const now = nowIso();
@@ -552,6 +555,7 @@ async function prepareCreate(rawInput, { inventoryAdjust = new Map(), amendsSale
     transactionIds: [],
     amendsSaleId,
     replacedBySaleId: null,
+    soldShort: shortages.length ? shortages.map((s) => ({ refId: s.refId, shortfall: s.shortfall })) : null,
     description: input.description,
     pricingSnapshot: { ...pricingSnapshot(docConfig, 'sale'), discountScope: 'invoice-before-tax' },
     returnedWeightGrams: 0,
@@ -716,8 +720,8 @@ async function loadPostings(doc) {
 // ─────────────────────────────── عملیات اصلی ───────────────────────────────
 
 /** ثبت فاکتور فروش — کل عملیات در یک IndexedDB Transaction. */
-export async function createSale(input) {
-  const prepared = await prepareCreate(input);
+export async function createSale(input, { allowShortage = false } = {}) {
+  const prepared = await prepareCreate(input, { allowShortage });
   const { sale, receiptRecords, dueDateRecord } = prepared;
   const timestamp = nowIso();
 
@@ -835,13 +839,14 @@ export async function voidSale(id, options = {}) {
  * فاکتور با برگشت فعال یا دریافت بعدی اصلاح نمی‌شود (همان گارد لغو). تسویه‌های مستقلی که به
  * این فاکتور تخصیص یافته بودند باطل نمی‌شوند و به علی‌الحساب مشتری برمی‌گردند.
  */
-export async function amendSale(id, input) {
+export async function amendSale(id, input, { allowShortage = false } = {}) {
   const voidPrepared = await prepareVoid(id, { note: 'اصلاح فاکتور' });
   if (voidPrepared.alreadyVoided) throw new SaleStateError('فاکتور باطل‌شده قابل اصلاح نیست؛ فاکتور جدید ثبت کنید.');
 
   const created = await prepareCreate(input, {
     inventoryAdjust: inventoryAdjustFromVoid(voidPrepared.sale),
     amendsSaleId: id,
+    allowShortage,
   });
   const voidedSale = { ...voidPrepared.voidedSale, replacedBySaleId: created.sale.id };
   const timestamp = nowIso();
@@ -1274,6 +1279,7 @@ export async function listSales({ search = '', status = 'all', customerId = null
   const [all, customers] = await Promise.all([getAll('sales'), getAll('customers')]);
   const customerById = new Map(customers.map((c) => [c.id, c]));
   const term = search.trim().toLowerCase();
+  const outstanding = await outstandingByInvoice('customer', new Set(all.map((s) => s.customerId)));
 
   return all
     .filter((s) => {
@@ -1297,6 +1303,7 @@ export async function listSales({ search = '', status = 'all', customerId = null
       ...s,
       customerName: customerById.get(s.customerId)?.name || s.customerNameSnapshot || '—',
       customerCode: customerById.get(s.customerId)?.code || '',
+      outstandingGrams: s.status === 'voided' ? 0 : outstanding.get(s.id) || 0,
     }))
     .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.number).localeCompare(String(a.number)));
 }

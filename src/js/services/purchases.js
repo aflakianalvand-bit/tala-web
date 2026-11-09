@@ -36,7 +36,7 @@ import { labNameFor, labNameError, registerLabsInTx, labNamesOf, LAB_WRITE_STORE
 // به بعد مانده‌ی هر فاکتور از فرمول یکتای «مبلغ − Σ تخصیص‌ها» می‌آید. اگر پرداخت‌های
 // داخل سند از این فرمول مستثنا می‌شدند، دو مسیر موازی برای یک عدد داشتیم — دقیقاً
 // همان چیزی که معماری Ledger این پروژه از آن پرهیز می‌کند.
-import { buildAllocationRecords, prepareTargetVoid, partyInvoices } from './allocations.js';
+import { buildAllocationRecords, prepareTargetVoid, partyInvoices, outstandingByInvoice } from './allocations.js';
 import { getDueItem } from './dueDates.js';
 import {
   newPlan,
@@ -930,6 +930,7 @@ export async function getPurchasePayments(purchase) {
 export async function listPurchases({ search = '', status = 'all', supplierId = null, from = null, to = null } = {}) {
   const [all, suppliers] = await Promise.all([getAll('purchases'), getAll('suppliers')]);
   const supplierById = new Map(suppliers.map((s) => [s.id, s]));
+  const outstanding = await outstandingByInvoice('supplier', new Set(all.map((p) => p.supplierId)));
   const term = search.trim().toLowerCase();
 
   return all
@@ -948,6 +949,7 @@ export async function listPurchases({ search = '', status = 'all', supplierId = 
     })
     .map((p) => ({
       ...p,
+      outstandingGrams: p.status === 'voided' ? 0 : outstanding.get(p.id) || 0,
       supplierName: supplierById.get(p.supplierId)?.name || p.supplierNameSnapshot || '—',
       supplierCode: supplierById.get(p.supplierId)?.code || '',
     }))

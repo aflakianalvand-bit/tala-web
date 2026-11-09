@@ -717,3 +717,15 @@ export async function prepareDocVoid(docId, { now = null } = {}) {
   const active = await allocationsForDoc(docId);
   return active.map((a) => ({ ...a, status: 'voided', voidedAt: stamp, updatedAt: stamp }));
 }
+
+
+/** (Phase 31) مانده‌ی زنده‌ی هر فاکتور (گرم ۷۵۰) برای فهرست‌ها؛ `remainingGrams` سند فقط Snapshot است. */
+export async function outstandingByInvoice(partyType, partyIds) {
+  const out = new Map();
+  await Promise.all(
+    [...partyIds].filter(Boolean).map(async (id) => {
+      for (const r of await partyInvoices(partyType, id)) out.set(r.targetId, r.outstandingGrams);
+    })
+  );
+  return out;
+}
