@@ -17,6 +17,7 @@ import { runVoidWithShortageGuard } from '../docs/voidGuard.js';
 import { formatRial, formatGrams } from '../../utils/format.js';
 import { openDocSheet } from '../docs/DocSheet.js';
 import { openPurchaseForm } from './PurchaseForm.js';
+import { describeBaseBalance, BalanceText } from '../party/partyLabels.js';
 import {
   GOLD_TYPE_LABELS,
   PAYMENT_MODE_LABELS,
@@ -80,7 +81,7 @@ export async function openPurchaseDetail(purchaseId) {
         return;
       }
 
-      const { purchase, dueItem, supplier, payments, dueDate, goldEntries, moneyEntries, history } = data;
+      const { purchase, outstandingGrams, dueItem, supplier, payments, dueDate, goldEntries, moneyEntries, history } = data;
       const status = purchaseStatusBadge(purchase);
       body.innerHTML = '';
 
@@ -111,6 +112,27 @@ export async function openPurchaseDetail(purchaseId) {
         );
       }
 
+      // کارهای اصلی بالای صفحه، نه زیر یک فهرست بلند.
+      const quick = document.createElement('div');
+      quick.className = 'doc-quick';
+      quick.appendChild(Button({ label: 'ارسال / چاپ', onClick: () => openDocSheet({ kind: 'purchase', id: purchase.id }) }));
+      if (purchase.status !== 'voided') {
+        quick.appendChild(
+          Button({
+            label: 'ویرایش سند',
+            variant: 'secondary',
+            onClick: async () => {
+              const saved = await openPurchaseForm({ purchase });
+              if (saved) {
+                changed = true;
+                close();
+              }
+            },
+          })
+        );
+      }
+      body.appendChild(quick);
+
       // ── تب‌ها ──
       const tabs = Tabs({
         tabs: [
@@ -122,12 +144,17 @@ export async function openPurchaseDetail(purchaseId) {
                 detailRow('تأمین‌کننده', supplier ? `${supplier.name} (${supplier.code})` : purchase.supplierNameSnapshot),
                 detailRow('تاریخ', displayDateLong(purchase.date)),
                 detailRow('وزن کل', formatGrams(purchase.totalWeightGrams)),
-                amountRow('بهای طلا', purchase.totalGoldPriceIRR),
-                amountRow('اجرت', purchase.totalWageIRR),
-                amountRow('مبلغ کل', purchase.grandTotalIRR),
-                amountRow('پرداخت نقدی', purchase.paidCashIRR),
-                detailRow('پرداخت طلا', `${formatGrams(purchase.paidGoldGrams)} (${formatRial(purchase.paidGoldValueIRR)})`),
-                amountRow('باقیمانده', purchase.remainingIRR, purchase.remainingIRR > 0 ? 'danger' : 'success')
+                ...[
+                  purchase.status !== 'voided' &&
+                    detailRow('مانده‌ی سند', BalanceText(describeBaseBalance(outstandingGrams, 'supplier'))),
+                  purchase.grandTotalGrams && detailRow('جمع سند', `${formatGrams(purchase.grandTotalGrams)} ۷۵۰`),
+                  purchase.totalGoldPriceIRR && amountRow('بهای طلا', purchase.totalGoldPriceIRR),
+                  purchase.totalWageIRR && amountRow('اجرت', purchase.totalWageIRR),
+                  purchase.grandTotalIRR && amountRow('مبلغ کل', purchase.grandTotalIRR),
+                  purchase.paidCashIRR && amountRow('پرداخت نقدی', purchase.paidCashIRR),
+                  purchase.paidGoldGrams &&
+                    detailRow('پرداخت طلا', `${formatGrams(purchase.paidGoldGrams)} (${formatRial(purchase.paidGoldValueIRR)})`),
+                ].filter(Boolean)
               );
 
               if (dueDate) {
@@ -259,26 +286,8 @@ export async function openPurchaseDetail(purchaseId) {
       // برگه‌ی چاپ برای سند باطل‌شده هم در دسترس است؛ خودِ برگه وضعیت ابطال را می‌نویسد.
       const actions = document.createElement('div');
       actions.className = 'modal__actions';
-      actions.appendChild(
-        Button({
-          label: 'برگه سند (چاپ)',
-          variant: 'secondary',
-          onClick: () => openDocSheet({ kind: 'purchase', id: purchase.id }),
-        })
-      );
       if (purchase.status !== 'voided') {
         actions.append(
-          Button({
-            label: 'اصلاح سند',
-            variant: 'secondary',
-            onClick: async () => {
-              const saved = await openPurchaseForm({ purchase });
-              if (saved) {
-                changed = true;
-                close();
-              }
-            },
-          }),
           Button({
             label: 'لغو سند',
             variant: 'danger',

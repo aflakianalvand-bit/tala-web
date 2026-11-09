@@ -5,7 +5,7 @@
 // کاربر در نوار جمع می‌بیند **همان** عددی است که ذخیره می‌شود، نه یک محاسبه‌ی
 // موازی در UI که ممکن است با سرویس واگرا شود.
 import { KaratInput } from '../../components/KaratInput.js';
-import { DEFAULT_FINENESS } from '../../services/units.js';
+import { DEFAULT_FINENESS, finenessOf } from '../../services/units.js';
 import { LabInput } from '../../components/LabInput.js';
 import { labApplies, labSuggestions as loadLabSuggestions } from '../../services/labs.js';
 import { unitsForConfig } from '../../services/goldTotals.js';
@@ -80,12 +80,12 @@ function emptyLine(config = {}) {
   };
 }
 
-function lineFromRecord(line) {
+function lineFromRecord(line, doc) {
   return {
     key: nextKey(),
     goldType: line.goldType,
     productId: line.productId || '',
-    karat: String(line.karat ?? ''),
+    karat: String(line.karat != null ? finenessOf(doc, line.karat) : ''),
     weightGrams: String(line.weightGrams ?? ''),
     ratePerGram: String(line.ratePerGram ?? ''),
     wageType: line.wageType || 'percent',
@@ -100,7 +100,7 @@ function lineFromRecord(line) {
  *   (سند قدیمی باطل و سند جدید ثبت می‌شود — BUSINESS_RULES §9).
  * @returns {Promise<object|null>} سند ثبت‌شده یا null در صورت انصراف
  */
-export async function openPurchaseForm({ purchase = null } = {}) {
+export async function openPurchaseForm({ purchase = null, supplierId = null } = {}) {
   const isAmend = !!purchase;
 
   await ensureDefaultAccounts();
@@ -116,7 +116,7 @@ export async function openPurchaseForm({ purchase = null } = {}) {
   const units = unitsForConfig(pricingConfig);
 
   const state = {
-    supplierId: purchase?.supplierId || suppliers[0]?.id || '',
+    supplierId: purchase?.supplierId || supplierId || suppliers[0]?.id || '',
     date: toDateInputValue(purchase?.date),
     // (Phase 19) نوع تسویه **اولین انتخاب کاربر** است و ساختار بقیه‌ی فرم را می‌سازد،
     // نه چیزی که از روی پرداخت‌ها حدس زده شود.
@@ -125,7 +125,7 @@ export async function openPurchaseForm({ purchase = null } = {}) {
     ratePerBaseGram: String(purchase?.ratePerBaseGram || pricingConfig.ratePerGram18k || ''),
     dueDate: purchase?.dueDate ? toDateInputValue(purchase.dueDate) : '',
     description: purchase?.description || '',
-    lines: purchase?.lines?.length ? purchase.lines.map(lineFromRecord) : [emptyLine(pricingConfig)],
+    lines: purchase?.lines?.length ? purchase.lines.map((l) => lineFromRecord(l, purchase)) : [emptyLine(pricingConfig)],
     payments: [],
   };
 
