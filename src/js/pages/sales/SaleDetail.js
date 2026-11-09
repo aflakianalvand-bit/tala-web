@@ -14,6 +14,8 @@ import { showToast } from '../../components/Toast.js';
 import { getSaleSummary, voidSale, voidSaleReturn } from '../../services/sales.js';
 import { runVoidWithShortageGuard } from '../docs/voidGuard.js';
 import { formatRial, formatGrams } from '../../utils/format.js';
+import { describeBaseBalance, BalanceText } from '../party/partyLabels.js';
+import { openSaleForm } from './SaleForm.js';
 import { openSaleReturnForm } from './SaleReturnForm.js';
 import { openDocSheet } from '../docs/DocSheet.js';
 import {
@@ -80,7 +82,7 @@ export async function openSaleDetail(saleId) {
         return;
       }
 
-      const { sale, dueItem, customer, receipts, dueDate, returns, goldEntries, moneyEntries, history } = data;
+      const { sale, outstandingGrams, dueItem, customer, receipts, dueDate, returns, goldEntries, moneyEntries, history } = data;
       const status = saleStatusBadge(sale);
       const retBadge = returnBadge(sale);
       body.innerHTML = '';
@@ -105,14 +107,37 @@ export async function openSaleDetail(saleId) {
         body.appendChild(
           Alert({
             variant: 'warning',
-            message: `این فاکتور باطل شده است؛ طلا به موجودی برگشته و هیچ طلبی از این بابت باقی نیست.${
-              sale.voidNote ? ` توضیح: ${sale.voidNote}` : ''
-            }`,
+            message: sale.replacedBySaleId
+              ? 'این فاکتور ویرایش شده است: اثر مالی آن کاملاً برگردانده شده و فاکتور جایگزین ثبت شده است.'
+              : `این فاکتور باطل شده است؛ طلا به موجودی برگشته و هیچ طلبی از این بابت باقی نیست.${
+                  sale.voidNote ? ` توضیح: ${sale.voidNote}` : ''
+                }`,
           })
         );
       }
 
       const activeReturns = returns.filter((r) => r.status !== 'voided');
+
+      // کارهای اصلی بالای صفحه، نه زیر یک فهرست بلند.
+      const quick = document.createElement('div');
+      quick.className = 'doc-quick';
+      quick.appendChild(Button({ label: 'ارسال / چاپ', onClick: () => openDocSheet({ kind: 'sale', id: sale.id }) }));
+      if (sale.status !== 'voided' && !activeReturns.length) {
+        quick.appendChild(
+          Button({
+            label: 'ویرایش فاکتور',
+            variant: 'secondary',
+            onClick: async () => {
+              const saved = await openSaleForm({ sale });
+              if (saved) {
+                changed = true;
+                close();
+              }
+            },
+          })
+        );
+      }
+      body.appendChild(quick);
 
       const tabs = Tabs({
         tabs: [
@@ -124,19 +149,23 @@ export async function openSaleDetail(saleId) {
                 detailRow('مشتری', customer ? `${customer.name} (${customer.code})` : sale.customerNameSnapshot),
                 detailRow('تاریخ', displayDateLong(sale.date)),
                 detailRow('وزن کل', formatGrams(sale.totalWeightGrams)),
-                amountRow('قیمت طلا', sale.totalGoldPriceIRR),
-                amountRow('اجرت', sale.totalWageIRR),
-                amountRow('سود', sale.totalProfitIRR),
-                amountRow('تخفیف', sale.discountIRR, sale.discountIRR > 0 ? 'danger' : ''),
-                amountRow('مالیات', sale.totalTaxIRR),
-                amountRow('مبلغ نهایی', sale.grandTotalIRR),
-                amountRow('دریافت نقدی', sale.receivedCashIRR),
-                detailRow(
-                  'دریافت طلا',
-                  `${formatGrams(sale.receivedGoldGrams)} (${formatRial(sale.receivedGoldValueIRR)})`
-                ),
-                amountRow('باقیمانده', sale.remainingIRR, sale.remainingIRR > 0 ? 'danger' : 'success')
+                // ردیف‌های صفر نمایش داده نمی‌شوند؛ فهرست بلند «۰ ریال» عدد مهم را پنهان می‌کرد.
+                ...[
+                  sale.status !== 'voided' &&
+                    detailRow('مانده‌ی فاکتور', BalanceText(describeBaseBalance(outstandingGrams, 'customer'))),
+                  sale.grandTotalGrams && detailRow('جمع فاکتور', `${formatGrams(sale.grandTotalGrams)} ۷۵۰`),
+                  sale.totalGoldPriceIRR && amountRow('قیمت طلا', sale.totalGoldPriceIRR),
+                  sale.totalWageIRR && amountRow('اجرت', sale.totalWageIRR),
+                  sale.totalProfitIRR && amountRow('سود', sale.totalProfitIRR),
+                  sale.discountIRR && amountRow('تخفیف', sale.discountIRR, 'danger'),
+                  sale.totalTaxIRR && amountRow('مالیات', sale.totalTaxIRR),
+                  sale.grandTotalIRR && amountRow('مبلغ نهایی', sale.grandTotalIRR),
+                  sale.receivedCashIRR && amountRow('دریافت نقدی', sale.receivedCashIRR),
+                  sale.receivedGoldGrams &&
+                    detailRow('دریافت طلا', `${formatGrams(sale.receivedGoldGrams)} (${formatRial(sale.receivedGoldValueIRR)})`),
+                ].filter(Boolean)
               );
+              if (sale.amendsSaleId) wrap.appendChild(detailRow('این فاکتور، اصلاحِ فاکتور قبلی است', 'بله'));
 
               if (sale.returnStatus !== 'none') {
                 wrap.append(
@@ -355,13 +384,6 @@ export async function openSaleDetail(saleId) {
       // شود دوباره چاپ شود (برگه خودش «باطل شده» را روی کاغذ می‌نویسد).
       const actions = document.createElement('div');
       actions.className = 'modal__actions';
-      actions.appendChild(
-        Button({
-          label: 'برگه سند (چاپ)',
-          variant: 'secondary',
-          onClick: () => openDocSheet({ kind: 'sale', id: sale.id }),
-        })
-      );
 
       if (sale.status !== 'voided') {
         if (sale.returnStatus !== 'full') {
@@ -407,7 +429,7 @@ export async function openSaleDetail(saleId) {
           })
         );
       }
-      body.appendChild(actions);
+      if (actions.childElementCount) body.appendChild(actions);
     }
 
     refresh();

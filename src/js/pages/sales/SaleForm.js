@@ -6,8 +6,8 @@
 //      ثبت بداند چقدر دارد (فروش بیش از موجودی در سرویس بلاک می‌شود).
 //   ۲) فیلدهای سود و مالیات هر قلم و تخفیف کل فاکتور اضافه شده‌اند.
 //
-// نکته: فاکتور فروش «اصلاح» ندارد. طبق BUSINESS_RULES §9 سند ثبت‌شده ویرایش نمی‌شود؛
-// برای اشتباه، سند لغو می‌شود و برای مرجوعی مشتری، سند برگشت ثبت می‌گردد.
+// ویرایش: طبق BUSINESS_RULES §9 سند ثبت‌شده درجا عوض نمی‌شود؛ با `sale` فرم پر می‌شود و
+// amendSale سند قبلی را باطل و سند جدید با شماره‌ی تازه ثبت می‌کند (در یک تراکنش).
 import { KaratInput } from '../../components/KaratInput.js';
 import { DEFAULT_FINENESS } from '../../services/units.js';
 import { GRAM_EPS as GRAM_EPS_750 } from '../../services/units.js';
@@ -28,6 +28,8 @@ import { ratePerGramForKarat } from '../../services/pricing.js';
 import { inventoryRefId } from '../../services/ledger.js';
 import {
   createSale,
+  amendSale,
+  saleAmendSeed,
   computeSaleTotals,
   derivePaymentMode,
   availableStock,
@@ -40,6 +42,7 @@ import {
   attachError,
   emptySettlement,
   settlementCard,
+  settlementFromRecord,
 } from '../docs/docFormParts.js';
 import { formatRial, formatGrams, formatBaseGrams } from '../../utils/format.js';
 import { toDateInputValue, fromDateInputValue } from '../../utils/date.js';
@@ -81,11 +84,29 @@ function emptyLine(config = {}) {
   };
 }
 
+function lineFromRecord(line) {
+  const text = (v) => String(v ?? '');
+  return {
+    key: nextKey(),
+    goldType: line.goldType,
+    productId: line.productId || '',
+    karat: text(line.karat),
+    weightGrams: text(line.weightGrams),
+    ratePerGram: text(line.ratePerGram),
+    wageType: line.wageType || 'percent',
+    wageValue: text(line.wageValue),
+    profitPercent: text(line.profitPercent),
+    taxPercent: text(line.taxPercent),
+  };
+}
+
 /**
  * فرم فروش را باز می‌کند.
+ * `sale` ⇒ حالت ویرایش (ابطال + سند جدید)؛ `customerId` ⇒ مشتری از قبل انتخاب‌شده.
  * @returns {Promise<object|null>} فاکتور ثبت‌شده یا null در صورت انصراف
  */
-export async function openSaleForm() {
+export async function openSaleForm({ sale = null, customerId = null } = {}) {
+  const isAmend = !!sale;
   await ensureDefaultAccounts();
   const [customers, products, accounts, pricingConfig, stock, labNames] = await Promise.all([
     listCustomers({ status: 'active' }),
@@ -97,17 +118,23 @@ export async function openSaleForm() {
     loadLabSuggestions(),
   ]);
 
+  const seed = isAmend ? await saleAmendSeed(sale) : null;
+  // مشتری فاکتور ممکن است حالا غیرفعال باشد؛ در فرم اصلاح باید همچنان انتخاب‌شده بماند.
+  if (isAmend && !customers.some((c) => c.id === sale.customerId)) {
+    customers.push({ id: sale.customerId, name: sale.customerNameSnapshot || '—', code: '' });
+  }
+
   const state = {
-    customerId: customers[0]?.id || '',
-    date: toDateInputValue(),
-    paymentMode: 'credit',
+    customerId: sale?.customerId || customerId || customers[0]?.id || '',
+    date: toDateInputValue(sale?.date),
+    paymentMode: sale?.paymentMode || 'credit',
     /** فیِ فاکتور (ریال هر گرم ۷۵۰) — فقط برای بخش ریالی لازم است. */
-    ratePerBaseGram: String(pricingConfig.ratePerGram18k || ''),
-    dueDate: '',
-    discountIRR: '',
-    description: '',
-    lines: [emptyLine(pricingConfig)],
-    receipts: [],
+    ratePerBaseGram: String(sale?.ratePerBaseGram || pricingConfig.ratePerGram18k || ''),
+    dueDate: sale?.dueDate ? toDateInputValue(sale.dueDate) : '',
+    discountIRR: sale?.discountIRR ? String(sale.discountIRR) : '',
+    description: sale?.description || '',
+    lines: seed ? seed.lines.map(lineFromRecord) : [emptyLine(pricingConfig)],
+    receipts: seed ? seed.receipts.map((r) => settlementFromRecord(r, nextKey)) : [],
   };
 
   let errors = { fields: {}, lines: {}, receipts: {} };
@@ -128,7 +155,7 @@ export async function openSaleForm() {
     let settled = false;
 
     const { modalEl, close } = openModal({
-      title: 'ثبت فروش جدید',
+      title: isAmend ? `ویرایش فاکتور ${sale.number}` : 'ثبت فروش جدید',
       content: body,
       onClose: () => {
         if (!settled) {
@@ -589,7 +616,7 @@ export async function openSaleForm() {
       actions.className = 'modal__actions';
       actions.append(
         Button({ label: 'انصراف', variant: 'secondary', onClick: () => close() }),
-        Button({ label: 'ثبت فروش', variant: 'primary', type: 'submit' })
+        Button({ label: isAmend ? 'ثبت فاکتور اصلاحی' : 'ثبت فروش', variant: 'primary', type: 'submit' })
       );
       form.appendChild(actions);
 
@@ -598,10 +625,10 @@ export async function openSaleForm() {
 
     async function submit() {
       try {
-        const result = await createSale(buildPayload());
+        const result = isAmend ? await amendSale(sale.id, buildPayload()) : await createSale(buildPayload());
         settled = true;
         close();
-        showToast(`فاکتور ${result.sale.number} ثبت شد.`, { variant: 'success' });
+        showToast(isAmend ? `فاکتور اصلاحی ${result.sale.number} ثبت شد.` : `فاکتور ${result.sale.number} ثبت شد.`, { variant: 'success' });
         resolve(result.sale);
       } catch (err) {
         if (err instanceof InsufficientStockError) {
