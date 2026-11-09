@@ -14,9 +14,12 @@ import { Button } from '../../components/Button.js';
 import { Input } from '../../components/Input.js';
 import { showToast } from '../../components/Toast.js';
 import { buildDocSheet } from '../../services/docSheet.js';
-import { SIDE_LABELS } from '../../services/goldAccount.js';
 import { SHEET_DECIMALS } from '../../services/goldEquivalent.js';
-import { toPersianDigits, formatNumber } from '../../utils/format.js';
+import { isIOS, isStandalone } from '../../services/pwa.js';
+import { toPersianDigits } from '../../utils/format.js';
+import { deliverFile } from '../../utils/download.js';
+import { gramsText as formatGramsText, sideGrams as formatSideGrams, rialText } from './sheetFormat.js';
+import { buildSheetImage } from './sheetImage.js';
 
 /** حداقل تعداد ردیف جدول، تا برگه‌ی کم‌قلم هم قاب کامل داشته باشد (مثل نمونه). */
 const MIN_TABLE_ROWS = 13;
@@ -46,21 +49,8 @@ function fitSheet(host) {
 // هر فراخوانی gramsText این مقدار را تنظیم می‌کند.
 let sheetDecimals = SHEET_DECIMALS;
 
-function gramsText(value) {
-  const n = Number(value) || 0;
-  return toPersianDigits(n.toFixed(sheetDecimals)).replace('.', '/');
-}
-
-function sideGrams(side, grams) {
-  const label = SIDE_LABELS[side] || '';
-  const text = gramsText(grams);
-  return label ? `${label} ${text}` : text;
-}
-
-function rialText(value) {
-  if (value === null || value === undefined || value === '') return '';
-  return toPersianDigits(formatNumber(Math.round(Number(value) || 0), { maximumFractionDigits: 0 }));
-}
+const gramsText = (value) => formatGramsText(value, sheetDecimals);
+const sideGrams = (side, grams) => formatSideGrams(side, grams, sheetDecimals);
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -308,10 +298,29 @@ export async function openDocSheet({ kind, id } = {}) {
 
     toolbar.innerHTML = '';
     const actions = el('div', 'sheet-toolbar__actions');
+    // تصویر همین‌جا از پیش ساخته می‌شود: iOS برگه‌ی اشتراک را فقط بلافاصله پس از لمس باز می‌کند.
+    const image = buildSheetImage(model).catch((err) => {
+      console.error('[DocSheet] image', err);
+      return null;
+    });
+    const fileName = `Sheet_${String(model.number || model.docId).replace(/[^a-zA-Z0-9_-]/g, '-')}.png`;
     actions.append(
-      Button({ label: 'چاپ / ذخیره PDF', onClick: print }),
-      Button({ label: 'بستن', variant: 'secondary', onClick: close })
+      Button({
+        label: 'ارسال / اشتراک',
+        onClick: async () => {
+          const blob = await image;
+          if (!blob) {
+            showToast('ساخت تصویر برگه در این مرورگر ممکن نشد.', { variant: 'warning' });
+            return;
+          }
+          const { method } = await deliverFile(blob, fileName, 'image/png');
+          if (method === 'download') showToast('تصویر برگه دانلود شد.', { variant: 'success' });
+        },
+      })
     );
+    // در برنامه‌ی نصب‌شده‌ی iOS window.print قابل اتکا نیست؛ گزینه‌ی Print در برگه‌ی اشتراک هست.
+    if (!(isIOS() && isStandalone())) actions.appendChild(Button({ label: 'چاپ / PDF', variant: 'secondary', onClick: print }));
+    actions.appendChild(Button({ label: 'بستن', variant: 'secondary', onClick: close }));
 
     const rateWrap = el('div', 'sheet-toolbar__rate');
     if (model.needsRate || model.rateFromOverride) {

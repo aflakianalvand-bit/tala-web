@@ -12,7 +12,7 @@
 
 import { KaratInput } from '../../components/KaratInput.js';
 import { LabInput } from '../../components/LabInput.js';
-import { DEFAULT_FINENESS, CURRENT_UNITS, equivalent750, isValidFineness, isValidScaleWeight } from '../../services/units.js';
+import { DEFAULT_FINENESS, CURRENT_UNITS, equivalent750, isValidFineness, isValidScaleWeight, finenessOf } from '../../services/units.js';
 import { labApplies } from '../../services/labs.js';
 import { Input } from '../../components/Input.js';
 import { Select } from '../../components/Select.js';
@@ -112,7 +112,8 @@ export function settlementFromRecord(record, keyFn) {
     accountId: record.accountId || '',
     amountIRR: record.method === 'cash' ? String(record.amountIRR ?? '') : '',
     goldType: record.goldType || 'melted',
-    karat: String(record.karat ?? DEFAULT_FINENESS),
+    // سند پیش از v10 عیار ۲۴تایی دارد؛ فرم اصلاح فقط هزاری می‌پذیرد.
+    karat: String(record.karat != null ? finenessOf(record, record.karat) : DEFAULT_FINENESS),
     weightGrams: record.method === 'gold' ? String(record.weightGrams ?? '') : '',
     ratePerGram: record.method === 'gold' ? String(record.ratePerGram ?? '') : '',
     labName: record.method === 'gold' ? record.labName || '' : '',
