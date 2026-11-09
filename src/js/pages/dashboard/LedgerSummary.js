@@ -75,7 +75,11 @@ function LedgerRow(row, rate, onOpen) {
     amounts.appendChild(irr);
   }
 
-  btn.append(who, amounts);
+  const avatar = document.createElement('span');
+  avatar.className = `ledger-row__avatar ledger-row__avatar--${BALANCE_WORDS[row.side].variant}`;
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.textContent = (row.name || row.code || '؟').trim().charAt(0);
+  btn.append(avatar, who, amounts);
   const word = BALANCE_WORDS[row.side].text;
   btn.setAttribute('aria-label', `${row.name}، ${PARTY_KIND_LABELS[row.kind]}: ${describeRow(row).amount} ${word} — گردش حساب`);
   btn.addEventListener('click', () => onOpen(row));
