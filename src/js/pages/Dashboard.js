@@ -35,6 +35,8 @@ import { KpiTile, ChipRow } from './dashboard/KpiTile.js';
 import { InstallBanner } from './install/InstallBanner.js'; // Phase 16
 import { NavTiles } from './nav/NavTiles.js'; // Phase 25
 import { LedgerSummarySection } from './dashboard/LedgerSummary.js'; // Phase 26
+import { rateInfo } from '../services/ledgerSummary.js';
+import { OPERATION_TILES } from './Operations.js';
 import { childrenOf } from '../navigation.js';
 
 /**
@@ -221,10 +223,55 @@ function DueAlertsSection() {
 
 // ────────────────────────── بخش‌های KPI ──────────────────────────
 
+/** نرخ امروز: مهم‌ترین عدد صبح؛ لمس ⇒ صفحه‌ی قیمت. اگر ثبت نشده، با هشدار می‌گوید. */
+function RateStrip(rate) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `rate-strip${rate?.isToday ? '' : ' rate-strip--missing'}`;
+  const label = document.createElement('span');
+  label.className = 'rate-strip__label';
+  label.textContent = rate?.isToday ? 'نرخ امروز (هر گرم ۷۵۰)' : 'نرخ امروز ثبت نشده';
+  const value = document.createElement('span');
+  value.className = 'rate-strip__value';
+  value.textContent = rate?.isToday ? formatRial(rate.ratePerGram750) : 'ثبت نرخ ←';
+  b.append(label, value);
+  b.addEventListener('click', () => navigate('/price'));
+  return b;
+}
+
+/** سه کار پرتکرار، یک لمس از صفحه‌ی اول. */
+function QuickActions() {
+  const el = document.createElement('div');
+  el.className = 'quick-actions';
+  for (const key of ['sale', 'purchase', 'settlement']) {
+    const tile = OPERATION_TILES.find((t) => t.key === key);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `quick-action quick-action--${key}`;
+    b.dataset.quick = key;
+    const icon = document.createElement('span');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = tile.icon;
+    const t = document.createElement('span');
+    t.textContent = tile.label;
+    b.append(icon, t);
+    b.addEventListener('click', () => tile.run());
+    el.appendChild(b);
+  }
+  return el;
+}
+
 function NowSection(data) {
   const el = section('وضعیت امروز', { ariaLabel: 'وضعیت لحظه‌ای' });
-
   el.appendChild(GoldHero(data.inventory));
+  return el;
+}
+
+/** کارت‌های ارزش، صندوق، مطالبات و بدهی — پس از معین حساب. */
+function BalancesSection(data) {
+  const el = document.createElement('section');
+  el.className = 'section';
+  el.setAttribute('aria-label', 'ارزش و مانده‌ها');
 
   const { receivables, payables, cash, inventory } = data;
 
@@ -386,12 +433,17 @@ export default async function DashboardPage() {
   // نه آفلاین کار می‌کند و نه داده‌اش ماندگار است — پس یک‌بار دیده‌شدن لازم
   // است. پس از نصب (یا بستنِ دستی) دیگر ساخته نمی‌شود.
   const installBanner = InstallBanner();
-  if (installBanner) wrap.appendChild(installBanner);
 
   // میزبان KPIها: با تعویض بازه فقط همین بخش دوباره ساخته می‌شود، نه کل صفحه —
   // بخش هشدار سررسید (که ممکن است باز و اسکرول‌شده باشد) دست نمی‌خورد.
+  const rateHost = document.createElement('div');
+  wrap.append(rateHost, QuickActions());
+  rateInfo().then((rate) => rateHost.appendChild(RateStrip(rate))).catch((err) => console.error('[Dashboard] rate', err));
+
   const kpiHost = document.createElement('div');
   wrap.appendChild(kpiHost);
+  // بنر نصب پس از اعداد روزانه، تا کار هر روز را پایین نراند.
+  if (installBanner) wrap.appendChild(installBanner);
 
   // (Phase 26) معین حساب: لایه‌ی دوم، بلافاصله پس از «وضعیت امروز». یک بار ساخته
   // می‌شود و با تعویض بازه فقط جابه‌جا می‌شود، نه دوباره خوانده (بازه ندارد؛ «الان» است).
@@ -458,6 +510,7 @@ export default async function DashboardPage() {
     kpiHost.innerHTML = '';
     kpiHost.appendChild(NowSection(data));
     kpiHost.appendChild(ledgerSection);
+    kpiHost.appendChild(BalancesSection(data));
     kpiHost.appendChild(
       PerformanceSection(data, (key) => {
         selectedPeriod = key;

@@ -73,31 +73,34 @@ export function openChooser(title, options) {
 
 /**
  * انتخاب طرف حساب برای تسویه: نوع (مشتری / تأمین‌کننده) + جستجو + فهرست.
- * جهت عادی ثبت می‌شود (دریافت از مشتری / پرداخت به تأمین‌کننده)؛ جهت معکوس
- * مثل قبل از صفحه‌ی خودِ شخص در دسترس است.
+ * هر چهار جهت از همین‌جا: عادی (دریافت از مشتری / پرداخت به تأمین‌کننده) و معکوس
+ * (پرداخت به مشتری / دریافت از تأمین‌کننده).
  */
 export function openPartyPicker() {
   const body = document.createElement('div');
   body.className = 'party-picker';
 
   const seg = document.createElement('div');
-  seg.className = 'period-switch';
+  seg.className = 'period-switch period-switch--grid';
   seg.setAttribute('role', 'radiogroup');
   seg.setAttribute('aria-label', 'نوع طرف حساب');
   const TYPES = [
-    { key: 'customer', label: 'دریافت از مشتری' },
-    { key: 'supplier', label: 'پرداخت به تأمین‌کننده' },
+    { id: 'in-customer', key: 'customer', reverse: false, label: 'دریافت از مشتری' },
+    { id: 'out-supplier', key: 'supplier', reverse: false, label: 'پرداخت به تأمین‌کننده' },
+    { id: 'out-customer', key: 'customer', reverse: true, label: 'پرداخت به مشتری' },
+    { id: 'in-supplier', key: 'supplier', reverse: true, label: 'دریافت از تأمین‌کننده' },
   ];
-  let type = 'customer';
+  let selected = TYPES[0];
   const segBtns = TYPES.map((t) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'period-switch__btn';
     b.setAttribute('role', 'radio');
     b.dataset.type = t.key;
+    b.dataset.op = t.id;
     b.textContent = t.label;
     b.addEventListener('click', () => {
-      type = t.key;
+      selected = t;
       sync();
       load();
     });
@@ -116,7 +119,7 @@ export function openPartyPicker() {
 
   function sync() {
     segBtns.forEach((b) => {
-      const on = b.dataset.type === type;
+      const on = b.dataset.op === selected.id;
       b.classList.toggle('period-switch__btn--active', on);
       b.setAttribute('aria-checked', on ? 'true' : 'false');
     });
@@ -125,6 +128,7 @@ export function openPartyPicker() {
   let seq = 0;
   async function load() {
     const mine = ++seq;
+    const type = selected.key;
     const lister = type === 'supplier' ? listSuppliers : listCustomers;
     let rows = [];
     try {
@@ -156,9 +160,9 @@ export function openPartyPicker() {
       code.textContent = p.code || '';
       b.append(name, code);
       b.addEventListener('click', () => {
-        const chosenType = type;
+        const { key, reverse } = selected;
         handle.close();
-        openSettlementForm(chosenType, p.id);
+        openSettlementForm(key, p.id, { reverse });
       });
       list.appendChild(b);
     }
