@@ -20,7 +20,10 @@ import { Textarea } from '../../components/Textarea.js';
 import { Button } from '../../components/Button.js';
 import { Alert } from '../../components/Alert.js';
 import { showToast } from '../../components/Toast.js';
-import { listCustomers } from '../../services/customers.js';
+import { confirmDialog } from '../../components/ConfirmDialog.js';
+import { openPartyForm } from '../party/PartyForm.js';
+import { CUSTOMER_LABELS } from '../Customers.js';
+import { listCustomers, customerService } from '../../services/customers.js';
 import { listProducts } from '../../services/products.js';
 import { ensureDefaultAccounts, listAccounts } from '../../services/accounts.js';
 import { getPricingConfig } from '../../services/priceRates.js';
@@ -135,6 +138,7 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
     description: sale?.description || '',
     lines: seed ? seed.lines.map(lineFromRecord) : [emptyLine(pricingConfig)],
     receipts: seed ? seed.receipts.map((r) => settlementFromRecord(r, nextKey)) : [],
+    step: 1,
   };
 
   let errors = { fields: {}, lines: {}, receipts: {} };
@@ -267,6 +271,20 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
         },
       });
       attachError(customerSelect, errors.fields.customerId);
+      const addCustomer = Button({
+        label: 'مشتری جدید',
+        variant: 'ghost',
+        icon: '+',
+        onClick: async () => {
+          if (!(await openPartyForm({ service: customerService, labels: CUSTOMER_LABELS }))) return;
+          const fresh = await listCustomers({ status: 'active' });
+          const added = fresh.find((c) => !customers.some((x) => x.id === c.id));
+          customers.splice(0, customers.length, ...fresh);
+          if (added) state.customerId = added.id;
+          render();
+        },
+      });
+      addCustomer.classList.add('field-add');
 
       const dateField = Input({
         label: 'تاریخ فروش',
@@ -296,7 +314,7 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
       modeHint.textContent = MODE_HINTS[state.paymentMode];
       attachError(modeSelect, errors.fields.paymentMode);
 
-      grid.append(modeSelect, customerSelect, dateField);
+      grid.append(modeSelect, customerSelect, addCustomer, dateField);
 
       if (state.paymentMode !== 'credit') {
         grid.append(
@@ -506,6 +524,61 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
       });
     }
 
+    const STEPS = ['مشتری و تسویه', 'اقلام', 'دریافت و ثبت'];
+    let wizard = null;
+
+    function wizardBtn(label, variant, onClick, role) {
+      const b = Button({ label, variant, onClick });
+      b.setAttribute('data-wiz', role);
+      return b;
+    }
+
+    function renderStepper() {
+      const el = document.createElement('div');
+      el.className = 'wizard-steps';
+      STEPS.forEach((label, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'wizard-step';
+        b.dataset.step = String(i + 1);
+        const n = document.createElement('span');
+        n.className = 'wizard-step__n';
+        n.textContent = String(i + 1);
+        const t = document.createElement('span');
+        t.textContent = label;
+        b.append(n, t);
+        b.addEventListener('click', () => goStep(i + 1));
+        el.appendChild(b);
+      });
+      return el;
+    }
+
+    function applyStep() {
+      for (const [node, steps] of wizard.nodes) node.classList.toggle('wiz-off', !steps.includes(state.step));
+      wizard.stepper.querySelectorAll('.wizard-step').forEach((b) => {
+        const n = Number(b.dataset.step);
+        b.classList.toggle('is-current', n === state.step);
+        b.classList.toggle('is-done', n < state.step);
+        if (n === state.step) b.setAttribute('aria-current', 'step');
+        else b.removeAttribute('aria-current');
+      });
+      const show = { cancel: state.step === 1, back: state.step > 1, next: state.step < 3, submit: state.step === 3 };
+      wizard.actions.querySelectorAll('[data-wiz]').forEach((b) => b.classList.toggle('wiz-off', !show[b.getAttribute('data-wiz')]));
+    }
+
+    function goStep(n) {
+      state.step = Math.min(3, Math.max(1, n));
+      applyStep();
+      modalEl.querySelector('.modal__body')?.scrollTo?.(0, 0);
+    }
+
+    /** پس از خطا، گامی را نشان بده که فیلد خطادار در آن است. */
+    function stepOfErrors() {
+      if (['customerId', 'date', 'paymentMode', 'ratePerBaseGram'].some((k) => errors.fields[k])) return 1;
+      if (Object.keys(errors.lines).length || errors.fields.discountIRR) return 2;
+      return 3;
+    }
+
     function render() {
       form.innerHTML = '';
 
@@ -516,7 +589,8 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
         form.appendChild(Alert({ variant: 'danger', message: errors.fields.receipts }));
       }
 
-      form.appendChild(renderHeaderFields());
+      const headerFields = renderHeaderFields();
+      form.appendChild(headerFields);
 
       const linesSection = document.createElement('div');
       linesSection.className = 'form-section';
@@ -611,28 +685,46 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
       );
 
       form.appendChild(totalsBar);
+      // گام‌ها: همه‌ی فیلدها در DOM می‌مانند و فقط نمایششان عوض می‌شود، پس چیزی از دست نمی‌رود.
+      const bodies = [...form.children].filter((c) => !c.classList.contains('alert'));
+      wizard = { nodes: new Map(), stepper: null, nav: null };
+      for (const c of bodies) {
+        if (c === headerFields) wizard.nodes.set(c, [1]);
+        else if (c === linesSection) wizard.nodes.set(c, [2]);
+        else if (c === totalsBar) wizard.nodes.set(c, [3]); // مرور جمع‌ها پیش از ثبت؛ روی گام اقلام فیلدها را نمی‌پوشاند
+        else if (c === receiptsSection || c === dueWrap) wizard.nodes.set(c, [3]);
+        else wizard.nodes.set(c, c.querySelector('textarea') ? [3] : [2]); // تخفیف ⇒ ۲، توضیحات ⇒ ۳
+      }
+      wizard.stepper = renderStepper();
+      form.prepend(wizard.stepper);
 
       const actions = document.createElement('div');
       actions.className = 'modal__actions';
       actions.append(
-        Button({ label: 'انصراف', variant: 'secondary', onClick: () => close() }),
+        wizardBtn('انصراف', 'secondary', () => close(), 'cancel'),
+        wizardBtn('قبلی', 'secondary', () => goStep(state.step - 1), 'back'),
+        wizardBtn('بعدی', 'primary', () => goStep(state.step + 1), 'next'),
         Button({ label: isAmend ? 'ثبت فاکتور اصلاحی' : 'ثبت فروش', variant: 'primary', type: 'submit' })
       );
+      actions.lastChild.setAttribute('data-wiz', 'submit');
       form.appendChild(actions);
+      wizard.actions = actions;
+      applyStep();
 
       updateTotals();
     }
 
-    async function submit() {
+    async function submit({ allowShortage = false } = {}) {
       try {
-        const result = isAmend ? await amendSale(sale.id, buildPayload()) : await createSale(buildPayload());
+        const options = { allowShortage };
+        const result = isAmend ? await amendSale(sale.id, buildPayload(), options) : await createSale(buildPayload(), options);
         settled = true;
         close();
         showToast(isAmend ? `فاکتور اصلاحی ${result.sale.number} ثبت شد.` : `فاکتور ${result.sale.number} ثبت شد.`, { variant: 'success' });
         resolve(result.sale);
       } catch (err) {
         if (err instanceof InsufficientStockError) {
-          // بلاک‌کننده است: هیچ مسیر «ادامه با تأیید» وجود ندارد (دستور Phase 7).
+          // (Phase 30) فروش تلفنی پیش از خرید: با تأیید صریح ثبت می‌شود و انبار کسری نشان می‌دهد.
           const message = err.shortages
             .map(
               (s) =>
@@ -640,16 +732,21 @@ export async function openSaleForm({ sale = null, customerId = null } = {}) {
                 `درخواست ${formatGrams(s.requested)} (کسری ${formatGrams(s.shortfall)})`
             )
             .join(' | ');
+          const proceed = await confirmDialog({
+            title: 'فروش پیش از خرید',
+            message: `موجودی کافی نیست: ${message}. اگر این طلا را بعداً از تأمین‌کننده می‌خرید، فاکتور ثبت می‌شود و انبار تا ثبت خرید کسری نشان می‌دهد.`,
+            confirmLabel: 'ثبت با کسری',
+          });
+          if (proceed) return submit({ allowShortage: true });
           errors = { fields: {}, lines: {}, receipts: {} };
+          state.step = 2;
           render();
-          form.prepend(
-            Alert({ variant: 'danger', message: `فروش بیش از موجودی مجاز نیست — ${message}` })
-          );
-          showToast('موجودی کافی نیست؛ فاکتور ثبت نشد.', { variant: 'danger' });
+          form.prepend(Alert({ variant: 'danger', message: `فروش بیش از موجودی ثبت نشد — ${message}` }));
           return;
         }
         if (err instanceof SaleValidationError) {
           errors = { fields: err.fieldErrors, lines: err.lineErrors, receipts: err.receiptErrors };
+          state.step = stepOfErrors();
           render();
           showToast('لطفاً خطاهای مشخص‌شده را برطرف کنید.', { variant: 'danger' });
           return;
