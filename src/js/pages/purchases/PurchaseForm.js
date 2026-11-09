@@ -18,7 +18,9 @@ import { Button } from '../../components/Button.js';
 import { Alert } from '../../components/Alert.js';
 import { showToast } from '../../components/Toast.js';
 import { confirmDialog } from '../../components/ConfirmDialog.js';
-import { listSuppliers } from '../../services/suppliers.js';
+import { listSuppliers, supplierService } from '../../services/suppliers.js';
+import { openPartyForm } from '../party/PartyForm.js';
+import { SUPPLIER_LABELS } from '../Suppliers.js';
 import { listProducts } from '../../services/products.js';
 import { ensureDefaultAccounts, listAccounts } from '../../services/accounts.js';
 import { getPricingConfig } from '../../services/priceRates.js';
@@ -257,6 +259,20 @@ export async function openPurchaseForm({ purchase = null, supplierId = null } = 
         },
       });
       attachError(supplierSelect, errors.fields.supplierId);
+      const addSupplier = Button({
+        label: 'تأمین‌کننده جدید',
+        variant: 'ghost',
+        icon: '+',
+        onClick: async () => {
+          if (!(await openPartyForm({ service: supplierService, labels: SUPPLIER_LABELS }))) return;
+          const fresh = await listSuppliers({ status: 'active' });
+          const added = fresh.find((c) => !suppliers.some((x) => x.id === c.id));
+          suppliers.splice(0, suppliers.length, ...fresh);
+          if (added) state.supplierId = added.id;
+          render();
+        },
+      });
+      addSupplier.classList.add('field-add');
 
       const dateField = Input({
         label: 'تاریخ خرید',
@@ -288,7 +304,7 @@ export async function openPurchaseForm({ purchase = null, supplierId = null } = 
       modeHint.textContent = MODE_HINTS[state.paymentMode];
       attachError(modeSelect, errors.fields.paymentMode);
 
-      grid.append(modeSelect, supplierSelect, dateField);
+      grid.append(modeSelect, supplierSelect, addSupplier, dateField);
 
       // ── فی فقط برای بخش ریالی ──
       if (state.paymentMode !== 'credit') {
