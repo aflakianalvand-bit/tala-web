@@ -6,6 +6,7 @@
 // هر کاشی یک <button> واقعی ≥ ۴۸px است با aria-label کامل.
 import { navigate } from '../../router.js';
 import { navEntry } from '../../navigation.js';
+import { setIcon } from '../../components/Icon.js';
 
 export function NavTiles(paths, { variant = 'grid', label = '' } = {}) {
   const el = document.createElement('nav');
@@ -24,7 +25,7 @@ export function NavTiles(paths, { variant = 'grid', label = '' } = {}) {
     const icon = document.createElement('span');
     icon.className = 'nav-tile__icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = entry.icon;
+    setIcon(icon, entry.icon);
 
     const title = document.createElement('span');
     title.className = 'nav-tile__title';
