@@ -1,4 +1,6 @@
 // Button.js
+import { setIcon } from './Icon.js';
+
 export function Button({ label, onClick, variant = 'primary', type = 'button', disabled = false, fullWidth = false, icon = '' }) {
   const btn = document.createElement('button');
   btn.type = type;
@@ -6,7 +8,7 @@ export function Button({ label, onClick, variant = 'primary', type = 'button', d
   if (icon) {
     const iconSpan = document.createElement('span');
     iconSpan.setAttribute('aria-hidden', 'true');
-    iconSpan.textContent = icon;
+    setIcon(iconSpan, icon);
     btn.appendChild(iconSpan);
   }
   const labelSpan = document.createElement('span');

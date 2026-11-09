@@ -1,5 +1,6 @@
 // EmptyState.js
 import { Button } from './Button.js';
+import { setIcon } from './Icon.js';
 
 export function EmptyState({ icon = '📭', title = 'چیزی یافت نشد', description = '', actionLabel = '', onAction } = {}) {
   const wrap = document.createElement('div');
@@ -8,7 +9,7 @@ export function EmptyState({ icon = '📭', title = 'چیزی یافت نشد', 
   const iconEl = document.createElement('div');
   iconEl.className = 'empty-state__icon';
   iconEl.setAttribute('aria-hidden', 'true');
-  iconEl.textContent = icon;
+  setIcon(iconEl, icon);
   wrap.appendChild(iconEl);
 
   const titleEl = document.createElement('div');

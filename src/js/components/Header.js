@@ -14,6 +14,7 @@
 //    هنگام آفلاین‌شدن ظاهر می‌شود.
 
 import { navigate } from '../router.js';
+import { setIcon } from './Icon.js';
 import { backupReminder, backupReminderDays, lastBackupInfo } from '../services/backup.js';
 import { themeState, toggleTheme, THEME_CHANGE_EVENT } from '../utils/theme.js';
 
@@ -53,6 +54,16 @@ export function renderHeader() {
   window.addEventListener('online', updateStatus);
   window.addEventListener('offline', updateStatus);
 
+  // ── جستجوی سراسری (Phase 31) — پویا، تا هدر به همه‌ی صفحه‌ها وابسته نشود.
+  const searchBtn = document.createElement('button');
+  searchBtn.type = 'button';
+  searchBtn.className = 'header-icon-btn';
+  searchBtn.id = 'header-search';
+  searchBtn.setAttribute('aria-label', 'جستجو');
+  setIcon(searchBtn, 'search');
+  searchBtn.addEventListener('click', async () => (await import('../pages/search/GlobalSearch.js')).openGlobalSearch());
+  actions.appendChild(searchBtn);
+
   // ── کلید تم (Phase 24) ── یک لمس: روشن ⇄ تیره. «خودکار» در تنظیمات است.
   const themeBtn = document.createElement('button');
   themeBtn.type = 'button';
@@ -60,7 +71,7 @@ export function renderHeader() {
   themeBtn.id = 'header-theme';
   const syncThemeBtn = () => {
     const dark = themeState().theme === 'dark';
-    themeBtn.textContent = dark ? '☀️' : '🌙';
+    setIcon(themeBtn, dark ? 'sun' : 'moon');
     themeBtn.setAttribute('aria-label', dark ? 'تم روشن' : 'تم تیره');
     themeBtn.title = themeBtn.getAttribute('aria-label');
   };
@@ -77,7 +88,7 @@ export function renderHeader() {
   const icon = document.createElement('span');
   icon.className = 'header-backup__icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = '💾';
+  setIcon(icon, 'save');
   const text = document.createElement('span');
   text.textContent = 'پشتیبان';
   backupBtn.append(icon, text);

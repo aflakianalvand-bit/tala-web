@@ -4,6 +4,7 @@
 // هر زیرصفحه (گزارش، انبار، کالا، …) آیتم والدش را فعال نگه می‌دارد، تا کاربر
 // همیشه بداند «کجای برنامه» است (قبلاً آرایه‌ی دستی مسیرهای «بیشتر» این کار را می‌کرد).
 import { navigate } from '../router.js';
+import { setIcon } from './Icon.js';
 import { NAV_TABS, tabOf } from '../navigation.js';
 
 export function renderBottomNav() {
@@ -20,7 +21,7 @@ export function renderBottomNav() {
     const icon = document.createElement('span');
     icon.className = 'bottom-nav__icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = item.icon;
+    setIcon(icon, item.icon);
 
     const label = document.createElement('span');
     label.className = 'bottom-nav__label';
