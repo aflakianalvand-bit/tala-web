@@ -30,6 +30,7 @@ import {
   inventoryRefOfDoc,
   roundGrams750,
   currentUnits,
+  rateForFineness,
 } from './units.js';
 import { get, getAll, getByIndex } from '../db/repo.js';
 import { runTransaction } from '../db/db.js';
@@ -56,6 +57,7 @@ import {
   allocationsForTarget,
   dueDateStatusOf,
   roundIRR,
+  partyInvoices,
 } from './allocations.js';
 import { getDueItem } from './dueDates.js';
 import {
@@ -335,6 +337,18 @@ async function loadPricingConfig() {
  * حالا در انبار باشد، فارغ از اینکه مشتری در همان معامله طلای کهنه تحویل می‌دهد
  * (آن طلا به سطل دیگری وارد می‌شود و کالای فروخته‌شده را جایگزین نمی‌کند).
  */
+/** طلایی که با باطل‌شدن این فاکتور به انبار برمی‌گردد — برای کنترل موجودی سند اصلاحی. */
+function inventoryAdjustFromVoid(sale) {
+  const adjust = new Map();
+  for (const line of sale.lines || []) {
+    if (!line.inventoryRefId) continue;
+    // سند پیش از v10 شناسه‌ی سطل قدیمی (melted:18) دارد؛ دفتر با شناسه‌ی هزاری است.
+    const refId = inventoryRefOfDoc(sale, line.inventoryRefId);
+    adjust.set(refId, (adjust.get(refId) || 0) + num(line.weightGrams));
+  }
+  return adjust;
+}
+
 async function findStockShortages(lines, adjustments = new Map()) {
   const balances = await inventoryBalances();
   const projected = new Map();
@@ -371,7 +385,7 @@ export async function availableStock() {
 
 // ───────────────────────── آماده‌سازی ثبت فاکتور ─────────────────────────
 
-async function prepareCreate(rawInput) {
+async function prepareCreate(rawInput, { inventoryAdjust = new Map(), amendsSaleId = null } = {}) {
   // ترتیب مهم است: پیکربندی موتور قیمت پیش از اعتبارسنجی خوانده می‌شود تا قلمی که
   // نرخش وارد نشده، نرخ روزِ عیار خودش را بگیرد و بعد اعتبارسنجی شود (Phase 8).
   const pricingConfig = await loadPricingConfig();
@@ -445,7 +459,7 @@ async function prepareCreate(rawInput) {
   if (!validationError.isEmpty) throw validationError;
 
   // کنترل موجودی — بلاک‌کننده، پیش از هر نوشتنی
-  const shortages = await findStockShortages(totals.lines);
+  const shortages = await findStockShortages(totals.lines, inventoryAdjust);
   if (shortages.length) throw new InsufficientStockError(shortages);
 
   // ── ساخت رکوردها ──
@@ -536,6 +550,8 @@ async function prepareCreate(rawInput) {
     dueDateId: dueDateRecord ? dueDateRecord.id : null,
     receiptIds: receiptRecords.map((r) => r.id),
     transactionIds: [],
+    amendsSaleId,
+    replacedBySaleId: null,
     description: input.description,
     pricingSnapshot: { ...pricingSnapshot(docConfig, 'sale'), discountScope: 'invoice-before-tax' },
     returnedWeightGrams: 0,
@@ -702,28 +718,31 @@ async function loadPostings(doc) {
 /** ثبت فاکتور فروش — کل عملیات در یک IndexedDB Transaction. */
 export async function createSale(input) {
   const prepared = await prepareCreate(input);
-  const { sale, receiptRecords, dueDateRecord, plan, allocationRecords } = prepared;
+  const { sale, receiptRecords, dueDateRecord } = prepared;
   const timestamp = nowIso();
 
-  await runTransaction(WRITE_STORES, 'readwrite', (tx) => {
-    tx.objectStore('sales').add(sale);
-    for (const rec of receiptRecords) tx.objectStore('receipts').add(rec);
-    for (const alloc of allocationRecords) tx.objectStore('allocations').add(alloc);
-    if (dueDateRecord) tx.objectStore('dueDates').add(dueDateRecord);
-    writePlan(tx, plan);
-    registerLabsInTx(tx, labNamesOf(receiptRecords), timestamp);
-    tx.objectStore('auditLog').add({
-      id: generateId(),
-      entity: 'sales',
-      entityId: sale.id,
-      action: 'create',
-      before: null,
-      after: sale,
-      timestamp,
-    });
-  });
+  await runTransaction(WRITE_STORES, 'readwrite', (tx) => writeCreate(tx, prepared, timestamp));
 
   return { sale, receipts: receiptRecords, dueDate: dueDateRecord };
+}
+
+/** نوشتن فاکتور تازه داخل یک تراکنش — مشترک بین ثبت و اصلاح. */
+function writeCreate(tx, { sale, receiptRecords, dueDateRecord, plan, allocationRecords }, timestamp) {
+  tx.objectStore('sales').add(sale);
+  for (const rec of receiptRecords) tx.objectStore('receipts').add(rec);
+  for (const alloc of allocationRecords) tx.objectStore('allocations').add(alloc);
+  if (dueDateRecord) tx.objectStore('dueDates').add(dueDateRecord);
+  writePlan(tx, plan);
+  registerLabsInTx(tx, labNamesOf(receiptRecords), timestamp);
+  tx.objectStore('auditLog').add({
+    id: generateId(),
+    entity: 'sales',
+    entityId: sale.id,
+    action: 'create',
+    before: null,
+    after: sale,
+    timestamp,
+  });
 }
 
 /**
@@ -731,10 +750,10 @@ export async function createSale(input) {
  * فاکتوری که برگشت ثبت‌شده‌ی فعال دارد لغو نمی‌شود (ابتدا باید برگشت لغو شود)،
  * وگرنه یک سند برگشت بی‌صاحب باقی می‌ماند که به فاکتوری باطل ارجاع می‌دهد.
  */
-export async function voidSale(id, { note = '' } = {}) {
+async function prepareVoid(id, { note = '' } = {}) {
   const sale = await get('sales', id);
   if (!sale) throw new SaleStateError('فاکتور فروش مورد نظر یافت نشد.');
-  if (sale.status === 'voided') return sale; // Idempotent
+  if (sale.status === 'voided') return { alreadyVoided: sale };
 
   const returns = await getByIndex('saleReturns', 'saleId', id);
   const activeReturns = returns.filter((r) => r.status !== 'voided');
@@ -780,24 +799,74 @@ export async function voidSale(id, { note = '' } = {}) {
   const voidedAllocations = await prepareTargetVoid(sale.id, { now });
   const originalTransactions = new Map(transactions.map((t) => [t.id, t]));
 
+  return { sale, voidedSale, voidedReceipts, voidedDueDate, voidedAllocations, plan, originalTransactions, now };
+}
+
+/** نوشتن لغو داخل یک تراکنش — مشترک بین لغو و اصلاح. */
+function writeVoid(tx, prepared, voidedSale = prepared.voidedSale) {
+  const { sale, voidedReceipts, voidedDueDate, voidedAllocations, plan, originalTransactions, now } = prepared;
+  tx.objectStore('sales').put(voidedSale);
+  for (const rec of voidedReceipts) tx.objectStore('receipts').put(rec);
+  for (const alloc of voidedAllocations) tx.objectStore('allocations').put(alloc);
+  if (voidedDueDate) tx.objectStore('dueDates').put(voidedDueDate);
+  writePlan(tx, plan, originalTransactions);
+  tx.objectStore('auditLog').add({
+    id: generateId(),
+    entity: 'sales',
+    entityId: sale.id,
+    action: 'void',
+    before: sale,
+    after: voidedSale,
+    timestamp: now,
+  });
+}
+
+export async function voidSale(id, options = {}) {
+  const prepared = await prepareVoid(id, options);
+  if (prepared.alreadyVoided) return prepared.alreadyVoided; // Idempotent
+  await runTransaction(WRITE_STORES, 'readwrite', (tx) => writeVoid(tx, prepared));
+  return prepared.voidedSale;
+}
+
+/**
+ * اصلاح فاکتور فروش — همان الگوی اصلاح سند خرید (BUSINESS_RULES §9): سند قبلی باطل و سند جدید
+ * با شماره‌ی تازه و ارجاع دوطرفه ثبت می‌شود، **هر دو در یک تراکنش**. ویرایش درجا ممنوع است.
+ * موجودی با احتساب طلایی کنترل می‌شود که از لغو همین فاکتور به انبار برمی‌گردد.
+ * فاکتور با برگشت فعال یا دریافت بعدی اصلاح نمی‌شود (همان گارد لغو). تسویه‌های مستقلی که به
+ * این فاکتور تخصیص یافته بودند باطل نمی‌شوند و به علی‌الحساب مشتری برمی‌گردند.
+ */
+export async function amendSale(id, input) {
+  const voidPrepared = await prepareVoid(id, { note: 'اصلاح فاکتور' });
+  if (voidPrepared.alreadyVoided) throw new SaleStateError('فاکتور باطل‌شده قابل اصلاح نیست؛ فاکتور جدید ثبت کنید.');
+
+  const created = await prepareCreate(input, {
+    inventoryAdjust: inventoryAdjustFromVoid(voidPrepared.sale),
+    amendsSaleId: id,
+  });
+  const voidedSale = { ...voidPrepared.voidedSale, replacedBySaleId: created.sale.id };
+  const timestamp = nowIso();
+
   await runTransaction(WRITE_STORES, 'readwrite', (tx) => {
-    tx.objectStore('sales').put(voidedSale);
-    for (const rec of voidedReceipts) tx.objectStore('receipts').put(rec);
-    for (const alloc of voidedAllocations) tx.objectStore('allocations').put(alloc);
-    if (voidedDueDate) tx.objectStore('dueDates').put(voidedDueDate);
-    writePlan(tx, plan, originalTransactions);
-    tx.objectStore('auditLog').add({
-      id: generateId(),
-      entity: 'sales',
-      entityId: sale.id,
-      action: 'void',
-      before: sale,
-      after: voidedSale,
-      timestamp: now,
-    });
+    writeVoid(tx, voidPrepared, voidedSale);
+    writeCreate(tx, created, timestamp);
   });
 
-  return voidedSale;
+  return { voided: voidedSale, sale: created.sale, receipts: created.receiptRecords, dueDate: created.dueDateRecord };
+}
+
+/** مقادیر اولیه‌ی فرم اصلاح: عیار هزاری (سند قدیمی ترجمه می‌شود) و دریافت‌های معتبر. */
+export async function saleAmendSeed(sale) {
+  const fee = num(sale.ratePerBaseGram);
+  const lines = (sale.lines || []).map((l) => {
+    const karat = finenessOf(sale, l.karat);
+    // نرخی که از «فی» آمده خالی می‌ماند تا تغییر فی روی همه‌ی اقلام اثر کند (یک سند، یک نرخ).
+    const fromFee = fee > 0 && Math.abs(num(l.ratePerGram) - rateForFineness(fee, karat)) <= 1;
+    return { ...l, karat, ratePerGram: fromFee ? '' : l.ratePerGram };
+  });
+  const receipts = (await Promise.all((sale.receiptIds || []).map((rid) => get('receipts', rid))))
+    .filter((r) => r && r.status !== 'voided')
+    .map((r) => ({ ...r, karat: r.method === 'gold' ? finenessOf(r, r.karat) : r.karat }));
+  return { lines, receipts };
 }
 
 // ───────────────────────── برگشت از فروش (Phase 7) ─────────────────────────
@@ -1259,8 +1328,12 @@ export async function getSaleSummary(id) {
 
   const receipts = (await Promise.all((sale.receiptIds || []).map((rid) => get('receipts', rid)))).filter(Boolean);
 
+  // مانده‌ی امروز از تخصیص‌ها مشتق می‌شود؛ `remainingGrams` فاکتور فقط Snapshot لحظه‌ی ثبت است.
+  const invoiceRow = (await partyInvoices('customer', sale.customerId)).find((r) => r.targetId === sale.id);
+
   return {
     sale,
+    outstandingGrams: invoiceRow ? invoiceRow.outstandingGrams : 0,
     customer: customer || null,
     receipts,
     dueDate,

@@ -361,6 +361,9 @@ export async function listAccounts({ search = '', status = 'active', includeInac
 
 /** فهرست حساب‌های قابل انتخاب در فرم‌های پرداخت/دریافت (فعال و حذف‌نشده). */
 export async function listSelectableAccounts() {
+  // نصب تازه: صندوق و بانک پیش‌فرض تا این خط ساخته نشده بودند و فرم تسویه، واریز و انتقال
+  // با «هیچ حساب فعالی وجود ندارد» بن‌بست می‌شدند؛ فقط فرم فروش و خرید خودشان می‌ساختند.
+  await ensureDefaultAccounts();
   return listAccounts({ status: 'active' });
 }
 

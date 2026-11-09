@@ -21,7 +21,7 @@
 //   پرداخت طلا          → Gold Ledger: OUT از انبار + Money: Debit تأمین‌کننده
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { isValidFineness, isValidScaleWeight, FINENESS_ERROR, WEIGHT_DECIMALS_ERROR, unitsStamp } from './units.js';
+import { isValidFineness, isValidScaleWeight, FINENESS_ERROR, WEIGHT_DECIMALS_ERROR, unitsStamp, inventoryRefOfDoc } from './units.js';
 import { get, getAll, getByIndex } from '../db/repo.js';
 import { runTransaction } from '../db/db.js';
 import { generateId } from '../utils/id.js';
@@ -36,7 +36,7 @@ import { labNameFor, labNameError, registerLabsInTx, labNamesOf, LAB_WRITE_STORE
 // به بعد مانده‌ی هر فاکتور از فرمول یکتای «مبلغ − Σ تخصیص‌ها» می‌آید. اگر پرداخت‌های
 // داخل سند از این فرمول مستثنا می‌شدند، دو مسیر موازی برای یک عدد داشتیم — دقیقاً
 // همان چیزی که معماری Ledger این پروژه از آن پرهیز می‌کند.
-import { buildAllocationRecords, prepareTargetVoid } from './allocations.js';
+import { buildAllocationRecords, prepareTargetVoid, partyInvoices } from './allocations.js';
 import { getDueItem } from './dueDates.js';
 import {
   newPlan,
@@ -764,7 +764,8 @@ function inventoryAdjustFromVoid(purchase) {
   const adjust = new Map();
   const bump = (refId, delta) => adjust.set(refId, (adjust.get(refId) || 0) + delta);
   for (const line of purchase.lines || []) {
-    if (line.inventoryRefId) bump(line.inventoryRefId, -num(line.weightGrams));
+    // سند پیش از v10 شناسه‌ی سطل قدیمی دارد؛ دفتر با شناسه‌ی هزاری است.
+    if (line.inventoryRefId) bump(inventoryRefOfDoc(purchase, line.inventoryRefId), -num(line.weightGrams));
   }
   return adjust;
 }
@@ -984,8 +985,12 @@ export async function getPurchaseSummary(id) {
     await Promise.all((purchase.paymentIds || []).map((pid) => get('payments', pid)))
   ).filter(Boolean);
 
+  // مانده‌ی امروز از تخصیص‌ها مشتق می‌شود؛ `remainingGrams` سند فقط Snapshot لحظه‌ی ثبت است.
+  const invoiceRow = (await partyInvoices('supplier', purchase.supplierId)).find((r) => r.targetId === purchase.id);
+
   return {
     purchase,
+    outstandingGrams: invoiceRow ? invoiceRow.outstandingGrams : 0,
     supplier: supplier || null,
     payments,
     dueDate,

@@ -55,7 +55,7 @@ export function partyStateOf(party) {
 }
 
 /** نرخ ۷۵۰ آخرین رکورد نرخ (ریال بر گرم ۷۵۰) + آیا مال امروز است. */
-async function rateInfo(today) {
+export async function rateInfo(today = new Date()) {
   const rate = await getCurrentRate();
   const perGram = Number(rate?.ratePerGram18k) || 0;
   if (!rate || perGram <= 0) return null;
