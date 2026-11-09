@@ -19,7 +19,24 @@ import { isIOS, isStandalone } from '../../services/pwa.js';
 import { toPersianDigits } from '../../utils/format.js';
 import { deliverFile } from '../../utils/download.js';
 import { gramsText as formatGramsText, sideGrams as formatSideGrams, rialText } from './sheetFormat.js';
-import { buildSheetImage } from './sheetImage.js';
+import { buildSheetImage, SHEET_TEMPLATES } from './sheetImage.js';
+
+const TEMPLATE_KEY = 'tala.sheetTemplate';
+function readTemplate() {
+  try {
+    const v = window.localStorage.getItem(TEMPLATE_KEY);
+    return SHEET_TEMPLATES.some((t) => t.key === v) ? v : 'simple';
+  } catch {
+    return 'simple';
+  }
+}
+function writeTemplate(v) {
+  try {
+    window.localStorage.setItem(TEMPLATE_KEY, v);
+  } catch {
+    /* مرور خصوصی: فقط همین نوبت می‌ماند */
+  }
+}
 
 /** حداقل تعداد ردیف جدول، تا برگه‌ی کم‌قلم هم قاب کامل داشته باشد (مثل نمونه). */
 const MIN_TABLE_ROWS = 13;
@@ -247,6 +264,7 @@ export async function openDocSheet({ kind, id } = {}) {
   document.body.appendChild(overlay);
 
   let rateOverride = 0;
+  let template = readTemplate();
 
   function onResize() {
     fitSheet(sheetHost);
@@ -293,13 +311,31 @@ export async function openDocSheet({ kind, id } = {}) {
       sheetHost.appendChild(el('div', 'sheet', err?.message || 'ساخت برگه ناموفق بود.'));
       return;
     }
-    sheetHost.appendChild(renderDocSheet(model));
+    const sheetNode = renderDocSheet(model);
+    sheetNode.classList.add(`sheet--${template}`);
+    sheetHost.appendChild(sheetNode);
     fitSheet(sheetHost);
 
     toolbar.innerHTML = '';
+    const picker = el('div', 'period-switch sheet-templates');
+    picker.setAttribute('role', 'radiogroup');
+    picker.setAttribute('aria-label', 'طرح برگه');
+    for (const t of SHEET_TEMPLATES) {
+      const b = el('button', `period-switch__btn${t.key === template ? ' period-switch__btn--active' : ''}`, t.label);
+      b.type = 'button';
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(t.key === template));
+      b.addEventListener('click', () => {
+        template = t.key;
+        writeTemplate(template);
+        refresh();
+      });
+      picker.appendChild(b);
+    }
+    toolbar.appendChild(picker);
     const actions = el('div', 'sheet-toolbar__actions');
     // تصویر همین‌جا از پیش ساخته می‌شود: iOS برگه‌ی اشتراک را فقط بلافاصله پس از لمس باز می‌کند.
-    const image = buildSheetImage(model).catch((err) => {
+    const image = buildSheetImage(model, template).catch((err) => {
       console.error('[DocSheet] image', err);
       return null;
     });
