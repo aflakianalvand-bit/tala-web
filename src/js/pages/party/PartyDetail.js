@@ -37,6 +37,8 @@ import { openPartyForm } from './PartyForm.js';
 // (Phase 11) ثبت تسویه و ویرایش تخصیص
 import { openSettlementForm } from './SettlementForm.js';
 import { openDocSheet } from '../docs/DocSheet.js';
+import { openSaleForm } from '../sales/SaleForm.js';
+import { openPurchaseForm } from '../purchases/PurchaseForm.js';
 import { openAllocationForm } from './AllocationForm.js';
 import { voidSettlement } from '../../services/settlements.js';
 import { runVoidWithShortageGuard } from '../docs/voidGuard.js';
@@ -583,7 +585,8 @@ export function openPartyDetail({ service, labels, id, initialTab = 'info' }) {
       badges.appendChild(Badge({ label: p.code, variant: 'neutral' }));
       const status = partyStatusBadge(p);
       badges.appendChild(Badge({ label: status.label, variant: status.variant }));
-      const bal = describeBalance(summary.balance, cfg.kind);
+      // واحد رسمی: گرم ۷۵۰ (سربرگ تا Phase 29 ریالی بود).
+      const bal = describeBaseBalance(summary.balanceGrams, cfg.kind);
       badges.appendChild(Badge({ label: `${bal.text}: ${bal.amount}`, variant: bal.variant }));
       head.append(nameEl, badges);
       body.appendChild(head);
@@ -712,6 +715,17 @@ export function openPartyDetail({ service, labels, id, initialTab = 'info' }) {
         });
       }
 
+      // ثبت مستقیم سند برای همین شخص، بدون برگشتن به «عملیات» و جستجوی دوباره.
+      const newDocBtn = Button({
+        label: cfg.kind === 'supplier' ? 'سند خرید جدید' : 'فاکتور فروش جدید',
+        variant: 'primary',
+        onClick: async () => {
+          const saved = cfg.kind === 'supplier' ? await openPurchaseForm({ supplierId: id }) : await openSaleForm({ customerId: id });
+          if (saved) await reloadAfterChange(true);
+        },
+      });
+      actions.classList.add('modal__actions--grid');
+      if (!p.deletedAt && p.active !== false) actions.append(newDocBtn);
       actions.append(settleBtn, reverseBtn, editBtn, deleteRestoreBtn);
       body.appendChild(actions);
     }
