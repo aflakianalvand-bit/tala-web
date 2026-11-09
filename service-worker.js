@@ -21,7 +21,7 @@
 //    پاک‌شدن کش هیچ رکوردی را حذف نمی‌کند.
 
 /* === PRECACHE:BEGIN — تولید خودکار توسط tools/build-sw.mjs — دستی ویرایش نکنید === */
-const SW_VERSION = '4631dd9ded73';
+const SW_VERSION = '61466859e600';
 
 // فایل‌های بحرانی: اگر حتی یکی از این‌ها پیش‌کش نشود، نصب نسخه‌ی جدید
 // عمداً شکست می‌خورد و نسخه‌ی قبلی سرِ کار می‌ماند (نیمه‌کش = برنامه‌ی خراب).
@@ -32,6 +32,7 @@ const PRECACHE_CORE = [
   './src/css/base.css',
   './src/css/components.css',
   './src/css/fonts.css',
+  './src/css/ios.css',
   './src/css/layout.css',
   './src/css/print.css',
   './src/css/variables.css',
@@ -43,6 +44,7 @@ const PRECACHE_CORE = [
   './src/js/components/ConfirmDialog.js',
   './src/js/components/EmptyState.js',
   './src/js/components/Header.js',
+  './src/js/components/Icon.js',
   './src/js/components/Input.js',
   './src/js/components/JalaliDatePicker.js',
   './src/js/components/KaratInput.js',
@@ -98,6 +100,7 @@ const PRECACHE_CORE = [
   './src/js/pages/party/partyLabels.js',
   './src/js/pages/party/PartyListPage.js',
   './src/js/pages/party/SettlementForm.js',
+  './src/js/pages/party/StatementSheet.js',
   './src/js/pages/Price.js',
   './src/js/pages/products/ProductDetail.js',
   './src/js/pages/products/ProductForm.js',
@@ -115,6 +118,7 @@ const PRECACHE_CORE = [
   './src/js/pages/sales/saleLabels.js',
   './src/js/pages/sales/SaleReturnForm.js',
   './src/js/pages/Sales.js',
+  './src/js/pages/search/GlobalSearch.js',
   './src/js/pages/settings/LabManager.js',
   './src/js/pages/Settings.js',
   './src/js/pages/Suppliers.js',
@@ -151,9 +155,11 @@ const PRECACHE_CORE = [
   './src/js/services/reports/invoiceReports.js',
   './src/js/services/reports/model.js',
   './src/js/services/sales.js',
+  './src/js/services/search.js',
   './src/js/services/settings.js',
   './src/js/services/settlement.js',
   './src/js/services/settlements.js',
+  './src/js/services/statementSheet.js',
   './src/js/services/suppliers.js',
   './src/js/services/transfers.js',
   './src/js/services/units.js',
