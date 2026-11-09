@@ -37,6 +37,8 @@ import { openPartyForm } from './PartyForm.js';
 // (Phase 11) ثبت تسویه و ویرایش تخصیص
 import { openSettlementForm } from './SettlementForm.js';
 import { openDocSheet } from '../docs/DocSheet.js';
+import { setIcon } from '../../components/Icon.js';
+import { openStatementSheet } from './StatementSheet.js';
 import { openSaleForm } from '../sales/SaleForm.js';
 import { openPurchaseForm } from '../purchases/PurchaseForm.js';
 import { openAllocationForm } from './AllocationForm.js';
@@ -170,6 +172,26 @@ function infoNote(text) {
 
 // ───────────────────────────── سازنده‌ی تب‌ها ─────────────────────────────
 
+/** شماره با تماس و واتساپ یک‌لمسی. */
+function contactLinks(phone) {
+  const wrap = document.createElement('span');
+  wrap.className = 'contact-links';
+  const number = document.createElement('span');
+  number.className = 'num';
+  number.textContent = phone;
+  const link = (href, key, label) => {
+    const a = document.createElement('a');
+    a.className = 'contact-link';
+    a.href = href;
+    a.setAttribute('aria-label', label);
+    setIcon(a, key);
+    return a;
+  };
+  const intl = phone.replace(/^0/, '98');
+  wrap.append(number, link(`tel:${phone}`, 'call', 'تماس'), link(`https://wa.me/${intl}`, 'chat', 'واتساپ'));
+  return wrap;
+}
+
 function renderInfoTab(summary, cfg, loadHistory) {
   const wrap = document.createElement('div');
   const p = summary.party;
@@ -204,7 +226,7 @@ function renderInfoTab(summary, cfg, loadHistory) {
   rows.className = 'detail-rows';
   rows.appendChild(detailRow(`کد ${cfg.entity}`, p.code));
   rows.appendChild(detailRow('نام', p.name));
-  rows.appendChild(detailRow('موبایل', p.phone || '—'));
+  rows.appendChild(detailRow('موبایل', p.phone ? contactLinks(p.phone) : '—'));
   const statusBadge = partyStatusBadge(p);
   rows.appendChild(detailRow('وضعیت', Badge({ label: statusBadge.label, variant: statusBadge.variant })));
   rows.appendChild(detailRow(cfg.docCountLabel, String(summary.purchaseCount)));
@@ -724,9 +746,14 @@ export function openPartyDetail({ service, labels, id, initialTab = 'info' }) {
           if (saved) await reloadAfterChange(true);
         },
       });
+      const shareBtn = Button({
+        label: 'صورت‌حساب ریز',
+        variant: 'secondary',
+        onClick: () => openStatementSheet(cfg.kind, id),
+      });
       actions.classList.add('modal__actions--grid');
       if (!p.deletedAt && p.active !== false) actions.append(newDocBtn);
-      actions.append(settleBtn, reverseBtn, editBtn, deleteRestoreBtn);
+      actions.append(settleBtn, reverseBtn, shareBtn, editBtn, deleteRestoreBtn);
       body.appendChild(actions);
     }
 
