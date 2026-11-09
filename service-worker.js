@@ -21,7 +21,7 @@
 //    پاک‌شدن کش هیچ رکوردی را حذف نمی‌کند.
 
 /* === PRECACHE:BEGIN — تولید خودکار توسط tools/build-sw.mjs — دستی ویرایش نکنید === */
-const SW_VERSION = 'ff65dd0f6f18';
+const SW_VERSION = '4631dd9ded73';
 
 // فایل‌های بحرانی: اگر حتی یکی از این‌ها پیش‌کش نشود، نصب نسخه‌ی جدید
 // عمداً شکست می‌خورد و نسخه‌ی قبلی سرِ کار می‌ماند (نیمه‌کش = برنامه‌ی خراب).
@@ -77,6 +77,8 @@ const PRECACHE_CORE = [
   './src/js/pages/docs/docFormParts.js',
   './src/js/pages/docs/docLabels.js',
   './src/js/pages/docs/DocSheet.js',
+  './src/js/pages/docs/sheetFormat.js',
+  './src/js/pages/docs/sheetImage.js',
   './src/js/pages/docs/voidGuard.js',
   './src/js/pages/dueDates/DueItemCard.js',
   './src/js/pages/DueDates.js',
