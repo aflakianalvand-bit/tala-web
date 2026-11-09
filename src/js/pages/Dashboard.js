@@ -36,6 +36,7 @@ import { InstallBanner } from './install/InstallBanner.js'; // Phase 16
 import { NavTiles } from './nav/NavTiles.js'; // Phase 25
 import { LedgerSummarySection } from './dashboard/LedgerSummary.js'; // Phase 26
 import { rateInfo } from '../services/ledgerSummary.js';
+import { setIcon } from '../components/Icon.js';
 import { OPERATION_TILES } from './Operations.js';
 import { childrenOf } from '../navigation.js';
 
@@ -251,7 +252,7 @@ function QuickActions() {
     b.dataset.quick = key;
     const icon = document.createElement('span');
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = tile.icon;
+    setIcon(icon, tile.icon);
     const t = document.createElement('span');
     t.textContent = tile.label;
     b.append(icon, t);
@@ -264,6 +265,19 @@ function QuickActions() {
 function NowSection(data) {
   const el = section('وضعیت امروز', { ariaLabel: 'وضعیت لحظه‌ای' });
   el.appendChild(GoldHero(data.inventory));
+  // (Phase 30) کسری انبار ناشی از فروش پیش از خرید: یادآور خرید از تأمین‌کننده.
+  const short = data.inventory.shortages;
+  if (short.length) {
+    const alert = Alert({
+      variant: 'warning',
+      message: `کسری انبار: ${short.map((b) => `${b.label} ${formatGrams(-b.grams)}`).join('، ')} — خریدش را ثبت کنید.`,
+    });
+    alert.setAttribute('role', 'button');
+    alert.tabIndex = 0;
+    alert.classList.add('shortage-alert');
+    alert.addEventListener('click', () => navigate('/inventory'));
+    el.appendChild(alert);
+  }
   return el;
 }
 

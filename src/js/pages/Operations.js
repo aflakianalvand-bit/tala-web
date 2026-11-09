@@ -14,6 +14,7 @@ import { Input } from '../components/Input.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { openSaleForm } from './sales/SaleForm.js';
 import { openPurchaseForm } from './purchases/PurchaseForm.js';
+import { setIcon } from '../components/Icon.js';
 import { openSettlementForm } from './party/SettlementForm.js';
 import { openAdjustmentForm } from './inventory/AdjustmentForm.js';
 import { openMeltForm } from './inventory/MeltForm.js';
@@ -47,7 +48,7 @@ export function openChooser(title, options) {
     const icon = document.createElement('span');
     icon.className = 'op-choice__icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = opt.icon;
+    setIcon(icon, opt.icon);
     const text = document.createElement('span');
     text.className = 'op-choice__text';
     const t = document.createElement('span');
@@ -256,7 +257,7 @@ export default function OperationsPage() {
     const icon = document.createElement('span');
     icon.className = 'op-tile__icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = tile.icon;
+    setIcon(icon, tile.icon);
     const title = document.createElement('span');
     title.className = 'op-tile__title';
     title.textContent = tile.label;

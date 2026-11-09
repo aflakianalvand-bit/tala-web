@@ -7,7 +7,7 @@ import { Badge } from '../components/Badge.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { LoadingState } from '../components/LoadingState.js';
 import { listSales, summarizeSales } from '../services/sales.js';
-import { formatRial, formatGrams } from '../utils/format.js';
+import { formatRial, formatGrams, formatBaseGrams } from '../utils/format.js';
 import { summaryItem } from './docs/docFormParts.js';
 import { openSaleForm } from './sales/SaleForm.js';
 import { openSaleDetail } from './sales/SaleDetail.js';
@@ -62,7 +62,7 @@ function saleCard(row, onOpen) {
   if (row.status === 'open') {
     const remaining = document.createElement('span');
     remaining.className = 'entity-card__amount-label num';
-    remaining.textContent = `باقیمانده ${formatRial(row.remainingIRR)}`;
+    remaining.textContent = row.outstandingGrams > 0.0005 ? `مانده ${formatBaseGrams(row.outstandingGrams)}` : 'تسویه';
     side.appendChild(remaining);
   }
 

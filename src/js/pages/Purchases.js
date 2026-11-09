@@ -7,7 +7,7 @@ import { Badge } from '../components/Badge.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { LoadingState } from '../components/LoadingState.js';
 import { listPurchases, summarizePurchases } from '../services/purchases.js';
-import { formatRial, formatGrams } from '../utils/format.js';
+import { formatRial, formatGrams, formatBaseGrams } from '../utils/format.js';
 import { openPurchaseForm } from './purchases/PurchaseForm.js';
 import { openPurchaseDetail } from './purchases/PurchaseDetail.js';
 import { purchaseStatusBadge, PAYMENT_MODE_LABELS, displayDate } from './purchases/purchaseLabels.js';
@@ -57,7 +57,7 @@ function purchaseCard(row, onOpen) {
   if (row.status === 'open') {
     const remaining = document.createElement('span');
     remaining.className = 'entity-card__amount-label num';
-    remaining.textContent = `باقیمانده ${formatRial(row.remainingIRR)}`;
+    remaining.textContent = row.outstandingGrams > 0.0005 ? `مانده ${formatBaseGrams(row.outstandingGrams)}` : 'تسویه';
     side.appendChild(remaining);
   }
 
