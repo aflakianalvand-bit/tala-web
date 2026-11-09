@@ -1,0 +1,109 @@
+/* ios.css — لایه‌ی بصری یکپارچه به سبک iOS (Phase 30)
+ *
+ * آخرین شیوه‌نامه؛ ساختار صفحه‌ها همان است و این لایه ظاهر را یکدست می‌کند: عنوان بزرگ، فهرست‌های
+ * گروه‌بندی‌شده، کنترل قطعه‌ای، برگه‌ی کشویی، نوار پایین شیشه‌ای. همه‌ی رنگ‌ها از variables.css.
+ */
+body { background: var(--color-bg); -webkit-font-smoothing: antialiased; }
+button, a, [role="button"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* ── نوارها ── */
+.app-header { border-bottom: 0.5px solid var(--glass-line); box-shadow: none; }
+.app-header__title { font-weight: 800; letter-spacing: -0.01em; }
+.header-icon-btn { width: var(--touch-target-min); background: transparent; border: none; color: var(--color-primary); font-size: 1.35rem; display: inline-flex; align-items: center; justify-content: center; }
+.header-backup { background: transparent; border: none; color: var(--color-primary); font-weight: 600; gap: var(--space-1); }
+.header-backup__icon { font-size: 1.25rem; display: inline-flex; }
+.header-backup--due, .header-backup--never { background: var(--color-warning-bg); color: var(--color-warning); border-radius: 999px; }
+
+.bottom-nav { border-top: 0.5px solid var(--glass-line); box-shadow: none; }
+.bottom-nav__item { color: var(--color-text-muted); gap: 2px; background: transparent; }
+.bottom-nav__icon { font-size: 1.6rem; line-height: 1; display: inline-flex; background: transparent; }
+.bottom-nav__label { font-size: var(--font-size-xs); font-weight: 600; }
+.bottom-nav__item.is-active { color: var(--color-primary); }
+.bottom-nav__item.is-active .bottom-nav__icon { background: transparent; }
+.bottom-nav__item--primary .bottom-nav__icon { width: 44px; height: 44px; margin-top: -6px; border-radius: 50%; align-items: center; justify-content: center; background: var(--color-primary); color: var(--color-primary-contrast); font-size: 1.7rem; font-weight: 400; box-shadow: var(--shadow-sm); }
+.bottom-nav__item--primary.is-active .bottom-nav__icon { background: var(--color-primary); }
+
+/* ── عنوان بزرگ و بخش‌ها ── */
+.page-header h1 { font-size: var(--font-size-2xl); font-weight: 800; letter-spacing: -0.02em; }
+.section__title { font-size: var(--font-size-lg); font-weight: 800; letter-spacing: -0.01em; }
+.page-back { background: transparent; border: none; box-shadow: none; color: var(--color-primary); font-weight: 600; padding-inline: 0; }
+.app-outlet > * { animation: page-in var(--motion-base) ease-out; }
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── سطح‌ها: کارت‌های تخت با گوشه‌ی نرم ── */
+.card, .kpi-card, .entity-card, .product-card, .sale-card, .purchase-card, .balance-card, .ledger-summary__list, .nav-tile, .op-tile, .gold-hero, .summary-bar__item {
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+.kpi-card__label { color: var(--color-text-muted); font-weight: 500; }
+.kpi-card__value { font-weight: 800; letter-spacing: -0.01em; }
+.entity-card:active, .kpi-card--tap:active, .nav-tile:active, .op-tile:active, .ledger-row:active, .menu-list__item:active { opacity: 0.6; transform: none; background: var(--color-surface-alt); }
+
+.gold-hero { background: linear-gradient(145deg, var(--color-primary-bg), var(--color-surface)); }
+.gold-hero__value { font-weight: 800; letter-spacing: -0.02em; }
+
+.nav-tile { background: var(--color-surface); }
+.nav-tile__icon { font-size: 1.55rem; color: var(--color-primary); display: inline-flex; justify-content: center; }
+.op-tile__icon, .op-choice__icon { color: var(--color-primary); font-size: 1.6rem; display: inline-flex; }
+.op-tile { background: var(--color-surface); }
+
+/* فهرست گروه‌بندی‌شده */
+.detail-rows, .menu-list { background: var(--color-surface); border: none; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-glass); }
+.detail-row { padding: var(--space-3) var(--space-4); border-bottom: 0.5px solid var(--color-border); }
+.detail-row:last-child { border-bottom: none; }
+.detail-row__label { color: var(--color-text-muted); }
+.ledger-row, .menu-list__item { border-bottom: 0.5px solid var(--color-border); }
+.tabs__panel > div > .detail-row:first-child { border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
+.tabs__panel > div > .detail-row { background: var(--color-surface); }
+
+/* ── کنترل‌ها ── */
+.btn { border-radius: var(--radius-md); font-weight: 600; border: none; }
+.btn--primary { box-shadow: none; }
+.btn--secondary { background: var(--color-surface-alt); color: var(--color-primary-dark); border: none; }
+.btn--danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.btn:active:not(:disabled) { opacity: 0.65; transform: none; }
+.quick-action { border-radius: var(--radius-md); box-shadow: none; }
+.quick-action span:first-child { display: inline-flex; font-size: 1.3rem; }
+.quick-action--purchase, .quick-action--settlement { background: var(--color-surface); color: var(--color-primary-dark); box-shadow: var(--shadow-glass); }
+.rate-strip { border: none; box-shadow: var(--shadow-glass); background: var(--color-surface); }
+.rate-strip--missing { background: var(--color-warning-bg); }
+.shortage-alert { cursor: pointer; margin-top: var(--space-3); }
+
+.input, .select, .textarea { border-radius: var(--radius-md); border-width: 1px; }
+.field-add { grid-column: 1 / -1; justify-self: start; min-height: var(--touch-target-min); }
+.badge { border-radius: 999px; font-weight: 600; }
+.alert { border: none; border-radius: var(--radius-md); }
+
+/* کنترل قطعه‌ای */
+.period-switch, .tabs__bar { background: var(--color-surface-alt); border: none; border-radius: var(--radius-md); padding: 2px; gap: 2px; }
+.period-switch__btn, .tabs__tab { border: none; border-radius: calc(var(--radius-md) - 2px); background: transparent; color: var(--color-text); font-weight: 600; font-size: var(--font-size-sm); }
+.period-switch__btn--active, .tabs__tab--active { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); border-bottom-color: transparent; }
+.tabs__bar { border-bottom: none; }
+
+/* جدول */
+.table-wrap { border: none; border-radius: var(--radius-lg); box-shadow: var(--shadow-glass); }
+.table th { background: var(--color-surface); color: var(--color-text-muted); font-weight: 600; }
+.table td, .table th { border-color: var(--color-border); border-width: 0 0 0.5px; }
+
+/* ── برگه‌ی کشویی ── */
+.modal { border: none; position: relative; }
+.modal::before { content: ""; position: absolute; top: 7px; inset-inline-start: 50%; width: 36px; height: 5px; margin-inline-start: -18px; border-radius: 3px; background: var(--color-border-strong); opacity: 0.5; }
+.modal__header { border-bottom: none; padding-top: var(--space-5); }
+.modal__title { font-weight: 800; }
+.modal__close { background: var(--color-surface-alt); color: var(--color-text-muted); border: none; border-radius: 50%; }
+.modal__actions .btn { border-radius: var(--radius-md); }
+
+.toast { border-radius: 999px; }
+
+.contact-links { display: inline-flex; align-items: center; gap: var(--space-2); }
+.contact-link { display: inline-flex; align-items: center; justify-content: center; width: var(--touch-target-min); height: var(--touch-target-min); border-radius: 50%; background: var(--color-primary-bg); color: var(--color-primary-dark); font-size: 1.25rem; }
+
+/* ── فرم گام‌به‌گام ── */
+.wiz-off { display: none !important; }
+.wizard-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-4); }
+.wizard-step { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-height: var(--touch-target-min); background: transparent; border: none; color: var(--color-text-muted); font: inherit; font-size: var(--font-size-xs); font-weight: 600; cursor: pointer; }
+.wizard-step__n { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--color-surface-alt); }
+.wizard-step.is-current { color: var(--color-primary-dark); }
+.wizard-step.is-current .wizard-step__n { background: var(--color-primary); color: var(--color-primary-contrast); }
+.wizard-step.is-done .wizard-step__n { background: var(--color-primary-bg); color: var(--color-primary-dark); }

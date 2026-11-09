@@ -21,61 +21,60 @@
   color-scheme: light;
 
   /* ───────── رنگ‌ها — تم روشن ───────── */
-  --color-bg: #F5F0E6;
+  --color-bg: #F2F2F7;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F1EADC;
+  --color-surface-alt: #E9E9EE;
   --color-field: #FFFFFF;          /* فیلد ورودی همیشه مات */
-  --color-border: #DDD3C1;
-  --color-border-strong: #928469;  /* لبه‌ی فیلد: ≥ ۳:۱ روی سطح (WCAG 1.4.11) */
-  --color-text: #1F1A15;
-  --color-text-muted: #5A5046;
+  --color-border: #E3E3E8;
+  --color-border-strong: #8E8E93;  /* لبه‌ی فیلد: ≥ ۳:۱ روی سطح (WCAG 1.4.11) */
+  --color-text: #1C1C1E;
+  --color-text-muted: #636366;
 
-  --color-primary: #7A5C10;
-  --color-primary-dark: #5C450B;
-  --color-primary-bg: #F3E9CF;
+  --color-primary: #8A6100;
+  --color-primary-dark: #6B4B00;
+  --color-primary-bg: #F6EBD3;
   --color-primary-contrast: #FFFFFF;
 
-  --color-success: #166534;
-  --color-success-bg: #E3F4E8;
-  --color-danger: #A3211A;
-  --color-danger-bg: #FBE7E5;
-  --color-warning: #8A4F00;
+  --color-success: #157037;
+  --color-success-bg: #E2F5E7;
+  --color-danger: #BF231B;
+  --color-danger-bg: #FDE8E6;
+  --color-warning: #8F5200;
   --color-warning-bg: #FFF1D6;
-  --color-overdue: #7A1620;
-  --color-overdue-bg: #F6DEDF;
+  --color-overdue: #8E1B26;
+  --color-overdue-bg: #F9E1E3;
 
   /* متن روی رنگ‌های پُر (دکمه‌ی خطر، Toast) */
   --color-on-success: #FFFFFF;
   --color-on-danger: #FFFFFF;
   --color-on-warning: #FFFFFF;
-  --toast-bg: #2A231C;
+  --toast-bg: #1C1C1E;
   --toast-fg: #FFFFFF;
-  --overlay-bg: rgba(24, 18, 8, 0.42);
-  --focus-ring: #7A5C10;
+  --overlay-bg: rgba(0,0,0,0.35);
+  --focus-ring: #8A6100;
   --switch-knob: #FFFFFF;
 
   /* ───────── زمینه‌ی صفحه ─────────
      دو لکه‌ی نور ملایم؛ بدون آن‌ها شیشه روی رنگ یکدست فقط «سفید کم‌رنگ» است. */
-  --backdrop-a: rgba(212, 170, 70, 0.30);
-  --backdrop-b: rgba(190, 150, 110, 0.20);
+  --backdrop-a: rgba(0,0,0,0);
+  --backdrop-b: rgba(0,0,0,0);
 
   /* ───────── شیشه ─────────
-     --glass-bg: کروم (هدر/نوار پایین) — شفاف‌تر، روی آن فقط برچسب و آیکن است.
-     --glass-bg-card / --glass-bg-modal: مات‌تر، چون عدد و متن روی آن‌هاست. */
+     کروم (هدر/نوار پایین) نیمه‌مات؛ کارت و مودال عملاً مات، چون عدد و متن روی آن‌هاست. */
   --glass-blur: 18px;
   --glass-saturate: 160%;
-  --glass-bg: rgba(255, 252, 246, 0.72);
-  --glass-bg-card: rgba(255, 253, 249, 0.86);
-  --glass-bg-modal: rgba(255, 253, 249, 0.94);
-  --glass-edge: rgba(255, 255, 255, 0.85);      /* حاشیه‌ی نور (بالا/لبه) */
-  --glass-line: rgba(122, 92, 16, 0.16);        /* خط مرز بیرونی */
-  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(249,249,251,0.94);
+  --glass-bg-card: rgba(255,255,255,0.99);
+  --glass-bg-modal: rgba(247,247,250,0.98);
+  --glass-edge: rgba(255,255,255,0.9);      /* حاشیه‌ی نور (بالا/لبه) */
+  --glass-line: rgba(60,60,67,0.13);        /* خط مرز بیرونی */
+  --glass-highlight: 0 0 0 0 rgba(0, 0, 0, 0);
 
   /* ───────── سایه ───────── */
   --shadow-sm: 0 1px 2px rgba(40, 28, 10, 0.06), 0 2px 8px rgba(40, 28, 10, 0.05);
   --shadow-md: 0 8px 24px rgba(40, 28, 10, 0.12), 0 2px 6px rgba(40, 28, 10, 0.06);
   --shadow-lg: 0 18px 48px rgba(40, 28, 10, 0.18);
-  --shadow-glass: 0 4px 18px rgba(60, 40, 10, 0.08);
+  --shadow-glass: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 10px rgba(0, 0, 0, 0.04);
   --shadow-nav: 0 -4px 18px rgba(60, 40, 10, 0.05);
 
   /* ───────── Safe Area (Phase 16) ─────────
@@ -176,89 +175,89 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-bg: #13110E;
-    --color-surface: #1F1B17;
-    --color-surface-alt: #2A251F;
-    --color-field: #17140F;
-    --color-border: #3B342B;
-    --color-border-strong: #7A6E5C;
-    --color-text: #F4EFE7;
-    --color-text-muted: #BDB2A2;
-    --color-primary: #E2B84E;
-    --color-primary-dark: #F2D48A;
-    --color-primary-bg: #3A2F14;
-    --color-primary-contrast: #1C1505;
-    --color-success: #6BD495;
-    --color-success-bg: #12301F;
-    --color-danger: #FF9187;
-    --color-danger-bg: #3D1714;
-    --color-warning: #F3B650;
-    --color-warning-bg: #3A2A0D;
-    --color-overdue: #FFA2AC;
-    --color-overdue-bg: #42161E;
+    --color-bg: #000000;
+    --color-surface: #1C1C1E;
+    --color-surface-alt: #2C2C2E;
+    --color-field: #1C1C1E;
+    --color-border: #38383A;
+    --color-border-strong: #8E8E93;
+    --color-text: #F5F5F7;
+    --color-text-muted: #AEAEB2;
+    --color-primary: #E3B65B;
+    --color-primary-dark: #F0CD85;
+    --color-primary-bg: #3A2E14;
+    --color-primary-contrast: #1C1C1E;
+    --color-success: #4CD37A;
+    --color-success-bg: #12331F;
+    --color-danger: #FF7B72;
+    --color-danger-bg: #3D1A18;
+    --color-warning: #FFB340;
+    --color-warning-bg: #3A2A0E;
+    --color-overdue: #FF8A93;
+    --color-overdue-bg: #3F1A1F;
     --color-on-success: #06200F;
     --color-on-danger: #2B0906;
     --color-on-warning: #251702;
-    --toast-bg: #F4EFE7;
+    --toast-bg: #F5F5F7;
     --toast-fg: #1F1A15;
-    --overlay-bg: rgba(0, 0, 0, 0.6);
-    --focus-ring: #F2D48A;
-    --backdrop-a: rgba(226, 184, 78, 0.16);
-    --backdrop-b: rgba(120, 90, 160, 0.12);
-    --glass-bg: rgba(30, 26, 22, 0.70);
-    --glass-bg-card: rgba(33, 29, 24, 0.86);
-    --glass-bg-modal: rgba(31, 27, 23, 0.95);
-    --glass-edge: rgba(255, 255, 255, 0.10);
-    --glass-line: rgba(255, 255, 255, 0.08);
-    --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --overlay-bg: rgba(0,0,0,0.55);
+    --focus-ring: #E3B65B;
+    --backdrop-a: rgba(0,0,0,0);
+    --backdrop-b: rgba(0,0,0,0);
+    --glass-bg: rgba(28,28,30,0.94);
+    --glass-bg-card: rgba(28,28,30,0.99);
+    --glass-bg-modal: rgba(36,36,38,0.98);
+    --glass-edge: rgba(255,255,255,0.08);
+    --glass-line: rgba(255,255,255,0.12);
+    --glass-highlight: 0 0 0 0 rgba(0, 0, 0, 0);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
-    --shadow-glass: 0 4px 18px rgba(0, 0, 0, 0.35);
+    --shadow-glass: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 10px rgba(0, 0, 0, 0.04);
     --shadow-nav: 0 -4px 18px rgba(0, 0, 0, 0.35);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #13110E;
-  --color-surface: #1F1B17;
-  --color-surface-alt: #2A251F;
-  --color-field: #17140F;
-  --color-border: #3B342B;
-  --color-border-strong: #7A6E5C;
-  --color-text: #F4EFE7;
-  --color-text-muted: #BDB2A2;
-  --color-primary: #E2B84E;
-  --color-primary-dark: #F2D48A;
-  --color-primary-bg: #3A2F14;
-  --color-primary-contrast: #1C1505;
-  --color-success: #6BD495;
-  --color-success-bg: #12301F;
-  --color-danger: #FF9187;
-  --color-danger-bg: #3D1714;
-  --color-warning: #F3B650;
-  --color-warning-bg: #3A2A0D;
-  --color-overdue: #FFA2AC;
-  --color-overdue-bg: #42161E;
+  --color-bg: #000000;
+  --color-surface: #1C1C1E;
+  --color-surface-alt: #2C2C2E;
+  --color-field: #1C1C1E;
+  --color-border: #38383A;
+  --color-border-strong: #8E8E93;
+  --color-text: #F5F5F7;
+  --color-text-muted: #AEAEB2;
+  --color-primary: #E3B65B;
+  --color-primary-dark: #F0CD85;
+  --color-primary-bg: #3A2E14;
+  --color-primary-contrast: #1C1C1E;
+  --color-success: #4CD37A;
+  --color-success-bg: #12331F;
+  --color-danger: #FF7B72;
+  --color-danger-bg: #3D1A18;
+  --color-warning: #FFB340;
+  --color-warning-bg: #3A2A0E;
+  --color-overdue: #FF8A93;
+  --color-overdue-bg: #3F1A1F;
   --color-on-success: #06200F;
   --color-on-danger: #2B0906;
   --color-on-warning: #251702;
-  --toast-bg: #F4EFE7;
+  --toast-bg: #F5F5F7;
   --toast-fg: #1F1A15;
-  --overlay-bg: rgba(0, 0, 0, 0.6);
-  --focus-ring: #F2D48A;
-  --backdrop-a: rgba(226, 184, 78, 0.16);
-  --backdrop-b: rgba(120, 90, 160, 0.12);
-  --glass-bg: rgba(30, 26, 22, 0.70);
-  --glass-bg-card: rgba(33, 29, 24, 0.86);
-  --glass-bg-modal: rgba(31, 27, 23, 0.95);
-  --glass-edge: rgba(255, 255, 255, 0.10);
-  --glass-line: rgba(255, 255, 255, 0.08);
-  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --overlay-bg: rgba(0,0,0,0.55);
+  --focus-ring: #E3B65B;
+  --backdrop-a: rgba(0,0,0,0);
+  --backdrop-b: rgba(0,0,0,0);
+  --glass-bg: rgba(28,28,30,0.94);
+  --glass-bg-card: rgba(28,28,30,0.99);
+  --glass-bg-modal: rgba(36,36,38,0.98);
+  --glass-edge: rgba(255,255,255,0.08);
+  --glass-line: rgba(255,255,255,0.12);
+  --glass-highlight: 0 0 0 0 rgba(0, 0, 0, 0);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
-  --shadow-glass: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --shadow-glass: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 10px rgba(0, 0, 0, 0.04);
   --shadow-nav: 0 -4px 18px rgba(0, 0, 0, 0.35);
 }
 

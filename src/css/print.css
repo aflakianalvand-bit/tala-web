@@ -16,7 +16,7 @@
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 120; /* بالاتر از مودال جزئیات (۱۰۰)؛ با ۶۰ برگه پشت آن باز می‌شد */
   background: #55504a;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -201,3 +201,41 @@
   .sheet__table thead { display: table-header-group; }
   .sheet__table tr { break-inside: avoid; }
 }
+
+
+/* ── طرح‌های برگه (Phase 31): متن یکی است، فقط نما فرق می‌کند. ── */
+.sheet--classic { --sheet-ink: #2b2110; --sheet-line: #a8842f; outline: 2px solid #a8842f; outline-offset: -5px; }
+.sheet--classic .sheet__title { color: #7a5a14; }
+.sheet--classic .sheet__table thead th { background: #f4ead0; color: #5a4312; }
+.sheet--classic .sheet__party, .sheet--classic .sheet__balance { background: #fbf5e4; }
+
+.sheet--modern { --sheet-ink: #1c1c1e; --sheet-line: #d8d8dd; }
+.sheet--modern .sheet__top { background: #1c1c1e; color: #fff; padding: 3mm 4mm; border-radius: 2mm; }
+.sheet--modern .sheet__meta-box { border-color: #6b6b70; color: #fff; }
+.sheet--modern .sheet__table thead th { background: #f2f2f7; }
+.sheet--modern .sheet__party, .sheet--modern .sheet__balance { background: #f2f2f7; border-radius: 1.5mm; }
+
+.sheet--formal { --sheet-ink: #14233a; --sheet-line: #1f3a5f; outline: 2px solid #1f3a5f; outline-offset: -4px; }
+.sheet--formal .sheet__title { color: #1f3a5f; }
+.sheet--formal .sheet__table thead th { background: #1f3a5f; color: #fff; }
+.sheet--formal .sheet__party, .sheet--formal .sheet__balance { background: #e9eef5; }
+@media print {
+  .sheet--classic, .sheet--modern, .sheet--formal { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.sheet-templates { flex: 1 1 100%; }
+
+/* ── صورت‌حساب ریز ── */
+.stmt-host { max-width: 760px; margin: 0 auto; }
+.stmt { background: #fff; color: #111; border-radius: 10px; padding: 12px; font-size: 13px; }
+.stmt__invocation, .stmt__meta { text-align: center; color: #555; }
+.stmt__title { text-align: center; font-size: 19px; font-weight: 800; margin: 4px 0; }
+.stmt__table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.stmt__table th { background: #f2f2f7; }
+.stmt__table { table-layout: fixed; font-size: 12px; }
+.stmt__table th, .stmt__table td { padding: 6px 2px; border-bottom: 1px solid #d8d8dd; text-align: center; overflow-wrap: anywhere; }
+.stmt__table th:nth-child(1) { width: 21%; } .stmt__table th:nth-child(2) { width: 31%; }
+.stmt__table th:nth-child(3), .stmt__table th:nth-child(4) { width: 14%; } .stmt__table th:nth-child(5) { width: 20%; }
+.stmt__month td { background: #f6ebd3; color: #6b4b00; font-weight: 800; text-align: right; }
+.stmt__sum td { font-weight: 800; background: #fafafc; }
+.stmt__final { margin-top: 12px; text-align: center; font-weight: 800; }
